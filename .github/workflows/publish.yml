@@ -22,7 +22,7 @@ jobs:
       - run: uv build
       - run: uvx twine check --strict dist/*
       - name: Verify registry versions match tag
-        run: jq -e --arg v "${GITHUB_REF_NAME#v}" '.version == $v and all(.packages[]; .version == $v)' server.json
+        run: jq -e --arg v "${GITHUB_REF_NAME#v}" '.version == $v and all(.packages[]; .version == $v) and all(.packages[].runtimeArguments[]? | select(.name == "--with" and (.value | test("^rnds(\\[[^\\]]*\\])?(==|$)"))); .value | test("^rnds(\\[[^\\]]*\\])?==" + ($v | gsub("\\."; "\\.")) + "$"))' server.json
       - name: Verify tag matches package version
         run: test -f "dist/rnds-${GITHUB_REF_NAME#v}-py3-none-any.whl"
       - name: Verify wheel __version__ matches tag

@@ -239,6 +239,39 @@ def _check_release_versions(root: Path) -> bool:
                 f"versão do pacote MCP {identificador} difere de [project].version",
             )
             correto = False
+        runtime_arguments = package.get("runtimeArguments", [])
+        if not isinstance(runtime_arguments, list):
+            continue
+        for argument in runtime_arguments:
+            if not isinstance(argument, dict) or argument.get("name") != "--with":
+                continue
+            value = argument.get("value")
+            if (
+                not isinstance(value, str)
+                or re.match(
+                    r"^rnds(\[[^\]]*\])?(==|$)",
+                    value,
+                )
+                is None
+            ):
+                continue
+            if re.fullmatch(r"rnds(\[[^\]]*\])?==" + re.escape(version), value) is not None:
+                continue
+            valor_json = re.escape(json.dumps(value, ensure_ascii=False))
+            linha_valor = next(
+                (
+                    numero
+                    for numero, texto_linha in enumerate(server_lines, start=1)
+                    if re.search(r'"value"\s*:\s*' + valor_json, texto_linha)
+                ),
+                1,
+            )
+            _report_violation(
+                "server.json",
+                linha_valor,
+                f"versão fixada em --with ({value}) difere de [project].version",
+            )
+            correto = False
     return correto
 
 
