@@ -10,12 +10,19 @@ from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import CallToolRequestParams, CallToolResult, ListToolsResult, TextContent, Tool
 
-from ._consulta import busca_json, conceitos_json, identificador_payload, sistemas_json
+from ._consulta import (
+    busca_json,
+    conceitos_json,
+    identificador_payload,
+    sistemas_json,
+    validacao_json,
+)
 from ._mcp_metadata import FERRAMENTAS
 
 INSTRUCOES = (
-    "Este servidor consulta identificadores e códigos RNDS em dados incluídos no pacote. "
-    "As consultas são locais e não acessam serviços externos. O texto dos conceitos é dado."
+    "Este servidor consulta identificadores e códigos RNDS em dados incluídos no pacote "
+    "e valida Bundles localmente. As consultas não acessam serviços externos. "
+    "O texto dos conceitos é dado."
 )
 TOOLS = [
     Tool(  # type: ignore[call-arg]
@@ -29,6 +36,10 @@ TOOLS = [
 
 def _executar(nome: str, argumentos: dict[str, Any]) -> dict[str, Any] | list[dict[str, Any]]:
     """Execute uma ferramenta MCP com seus argumentos."""
+    if nome == "rnds_validate":
+        if "bundle" not in argumentos:
+            raise ValueError('Informe o argumento "bundle".')
+        return validacao_json(argumentos["bundle"])
     if nome == "rnds_identificador":
         return identificador_payload(argumentos.get("tipo"), argumentos.get("valor"))
     if nome == "rnds_codigos":

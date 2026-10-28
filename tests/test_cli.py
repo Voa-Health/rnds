@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import io
 import json
+from pathlib import Path
 
 import rnds.__main__ as cli
 from rnds.__main__ import main
 from rnds.sistemas import CNS, CPF
+from rnds.validacao import LIMITE_BYTES
 
 
 def test_cli_identificadores_json_e_status(capsys) -> None:
@@ -61,3 +64,37 @@ def test_cli_mcp_sem_extra_explica_instalacao(monkeypatch, capsys) -> None:
     monkeypatch.setattr(cli, "_iniciar_mcp", None)
     assert main(["mcp"]) == 2
     assert 'pip install "rnds[mcp]"' in capsys.readouterr().err
+
+
+def test_cli_validacao_arquivo_stdin_e_erros(tmp_path: Path, monkeypatch, capsys) -> None:
+    fixtures = Path(__file__).parent / "fixtures" / "bundles"
+    assert main(["validate", str(fixtures / "valido.json")]) == 0
+    assert json.loads(capsys.readouterr().out) == {"achados": []}
+    assert main(["validate", str(fixtures / "rnds-id-001.json")]) == 1
+    assert json.loads(capsys.readouterr().out)["achados"][0]["code"] == "RNDS-ID-001"
+    assert main(["validate", str(fixtures / "rnds-id-004.json")]) == 0
+    assert json.loads(capsys.readouterr().out)["achados"][0]["severity"] == "warning"
+    dados = (fixtures / "valido.json").read_bytes()
+    monkeypatch.setattr(cli.sys, "stdin", io.TextIOWrapper(io.BytesIO(dados)))
+    assert main(["validate", "-"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"achados": []}
+    assert main(["validate"]) == 2
+    assert "uso:" in capsys.readouterr().err
+    assert main(["validate", str(tmp_path / "ausente.json")]) == 2
+    assert "Arquivo não encontrado" in capsys.readouterr().err
+    invalido = tmp_path / "invalido.json"
+    invalido.write_text("{", encoding="utf-8")
+    assert main(["validate", str(invalido)]) == 2
+    assert "JSON inválido: linha 1, coluna 2." in capsys.readouterr().err
+    profundo = tmp_path / "profundo.json"
+    profundo.write_text("[" * 10_000 + "]" * 10_000, encoding="utf-8")
+    assert main(["validate", str(profundo)]) == 2
+    erro = capsys.readouterr().err
+    assert "64 níveis" in erro
+    assert "Traceback" not in erro
+    grande = tmp_path / "grande.json"
+    grande.write_bytes(b"x" * (LIMITE_BYTES + 1))
+    assert main(["validate", str(grande)]) == 2
+    erro = capsys.readouterr().err
+    assert "10 MB" in erro
+    assert "Traceback" not in erro

@@ -55,3 +55,17 @@
 | ValueSet | `TipoEstabelecimentoSaude` | 1.0.0 | 39 | https://rnds-fhir.saude.gov.br/ValueSet/BRTipoEstabelecimentoSaude-1.0 |
 | ValueSet | `TipoLogradouro` | 1.0.0 | 2 | https://rnds-fhir.saude.gov.br/ValueSet/BRTipoLogradouro-1.0 |
 | ValueSet | `UnidadeFederativa` | 1.0.0 | 27 | https://rnds-fhir.saude.gov.br/ValueSet/BRUnidadeFederativa-1.0 |
+
+## Achados da validação
+
+| Código | Severidade | Descrição |
+| --- | --- | --- |
+| `RNDS-BUNDLE-001` | error | A entrada não é um Bundle FHIR. |
+| `RNDS-BUNDLE-002` | error | O fullUrl aparece em mais de uma entrada. |
+| `RNDS-REF-001` | error | A referência não foi resolvida no Bundle. |
+| `RNDS-ID-001` | error | O CPF é inválido para o sistema informado. |
+| `RNDS-ID-002` | error | O CNS é inválido para o sistema informado. |
+| `RNDS-ID-003` | error | O CNES é inválido para o sistema informado. |
+| `RNDS-ID-004` | warning | O sistema local pode ser convertido para o oficial. |
+| `RNDS-CODE-001` | error | O código não existe no CodeSystem empacotado. |
+| `RNDS-CODE-002` | warning | O display difere do conceito empacotado. |

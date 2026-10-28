@@ -59,6 +59,10 @@ def test_servidor_e_respostas_das_ferramentas() -> None:
             {"sistema": origem_b, "codigo": "1", "display": "Baixa Avidez"},
         ],
     }
+    bundle = json.loads(
+        (Path(__file__).parent / "fixtures" / "bundles" / "valido.json").read_text(encoding="utf-8")
+    )
+    assert _executar("rnds_validate", {"bundle": bundle}) == {"achados": []}
     invalido = _executar(
         "rnds_codigos",
         {"sistema": url, "codigo": "1", "origem": "urn:synthetic"},
@@ -97,6 +101,24 @@ def test_erro_mcp_para_argumentos_ausentes_ou_nao_textuais() -> None:
     )
     assert sem_codigo.model_dump(by_alias=True)["isError"]
     assert "código" in sem_codigo.content[0].text
+    bundle_ausente = _resultado_tool("rnds_validate", {})
+    profundo: dict[str, object] = {"resourceType": "Bundle"}
+    atual = profundo
+    for indice in range(100):
+        filho: dict[str, object] = {}
+        atual[f"nivel{indice}"] = filho
+        atual = filho
+    bundle_profundo = _resultado_tool("rnds_validate", {"bundle": profundo})
+    bundle_grande = _resultado_tool(
+        "rnds_validate",
+        {"bundle": {"resourceType": "Bundle", "texto": "x" * (10 * 1024 * 1024 + 1)}},
+    )
+    assert bundle_ausente.model_dump(by_alias=True)["isError"]
+    assert 'Informe o argumento "bundle".' in bundle_ausente.content[0].text
+    assert bundle_profundo.model_dump(by_alias=True)["isError"]
+    assert "64 níveis" in bundle_profundo.content[0].text
+    assert bundle_grande.model_dump(by_alias=True)["isError"]
+    assert "10 MB" in bundle_grande.content[0].text
 
 
 def test_servidor_stdio_com_cliente_mcp() -> None:
@@ -118,10 +140,22 @@ def test_servidor_stdio_com_cliente_mcp() -> None:
                 "rnds_identificador",
                 {"tipo": "cns", "valor": "712345678901236"},
             )
+            validacao = await cliente.call_tool(
+                "rnds_validate",
+                {
+                    "bundle": json.loads(
+                        (Path(__file__).parent / "fixtures" / "bundles" / "valido.json").read_text(
+                            encoding="utf-8"
+                        )
+                    )
+                },
+            )
             assert {item.name for item in ferramentas.tools} == {
                 "rnds_identificador",
                 "rnds_codigos",
+                "rnds_validate",
             }
             assert json.loads(resultado.content[0].text)["valido"] is True
+            assert json.loads(validacao.content[0].text) == {"achados": []}
 
     anyio.run(consultar)

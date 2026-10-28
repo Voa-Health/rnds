@@ -1,0 +1,18 @@
+{
+  "resourceType": "Bundle",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Condition",
+        "code": {
+          "coding": [
+            {
+              "system": "https://rnds-fhir.saude.gov.br/CodeSystem/BRTerminologiaSuspeitaDiagnostica",
+              "code": "Z999"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -30,4 +30,13 @@ FERRAMENTAS: tuple[dict[str, Any], ...] = (
             },
         },
     },
+    {
+        "name": "rnds_validate",
+        "description": "Valide um Bundle FHIR contra regras RNDS offline e liste os achados.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"bundle": {"type": "object"}},
+            "required": ["bundle"],
+        },
+    },
 )

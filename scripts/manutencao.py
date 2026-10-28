@@ -29,6 +29,7 @@ from _rnds_data import (
 )
 
 from rnds._mcp_metadata import FERRAMENTAS
+from rnds.validacao import CODIGOS
 
 OUT_CODIGOS = ROOT / "src" / "rnds" / "_data" / "codigos.json"
 OUT_DOC = ROOT / "docs" / "codigos.md"
@@ -58,6 +59,18 @@ def _artefatos(*, check: bool) -> bool:
     """Compile os índices locais a partir da fonte versionada."""
     fonte = json.loads(FONTE.read_text(encoding="utf-8"))
     dados, documento = compilar(fonte)
+    linhas = [
+        "",
+        "## Achados da validação",
+        "",
+        "| Código | Severidade | Descrição |",
+        "| --- | --- | --- |",
+    ]
+    linhas.extend(
+        f"| `{codigo}` | {severidade} | {descricao} |"
+        for codigo, (severidade, descricao) in CODIGOS.items()
+    )
+    documento = documento.rstrip() + "\n" + "\n".join(linhas) + "\n"
     resultados = (
         (OUT_CODIGOS, _json_bytes(dados)),
         (OUT_DOC, documento.encode("utf-8")),

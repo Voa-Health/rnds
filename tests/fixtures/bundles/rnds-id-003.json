@@ -1,0 +1,16 @@
+{
+  "resourceType": "Bundle",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Organization",
+        "identifier": [
+          {
+            "system": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cnes",
+            "value": "123"
+          }
+        ]
+      }
+    }
+  ]
+}

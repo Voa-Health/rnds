@@ -40,5 +40,20 @@
       "type": "object"
     },
     "name": "rnds_codigos"
+  },
+  {
+    "description": "Valide um Bundle FHIR contra regras RNDS offline e liste os achados.",
+    "inputSchema": {
+      "properties": {
+        "bundle": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "bundle"
+      ],
+      "type": "object"
+    },
+    "name": "rnds_validate"
   }
 ]

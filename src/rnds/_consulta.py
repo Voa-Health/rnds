@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
+from collections.abc import Mapping
 from dataclasses import asdict
-from typing import Any
+from typing import Any, cast
 
 from . import cnes, cns, cpf
 from . import sistemas as identificadores
 from .codigos import busca, conceitos, sistemas
+from .validacao import LIMITE_BYTES, LIMITE_PROFUNDIDADE, _excede_profundidade, validar
 
 _MODULOS = {"cpf": cpf, "cns": cns, "cnes": cnes}
 _SISTEMAS = {
@@ -59,3 +62,46 @@ def busca_json(
 ) -> list[dict[str, Any]]:
     """Converta os conceitos encontrados em dados JSON."""
     return [asdict(item) for item in busca(sistema, codigo, origem)]
+
+
+def ler_bundle(conteudo: bytes) -> Any:
+    """Decodifique um arquivo JSON de Bundle dentro dos limites definidos."""
+    if len(conteudo) > LIMITE_BYTES:
+        raise ValueError("O Bundle excede 10 MB.")
+    try:
+        texto = conteudo.decode("utf-8")
+    except UnicodeDecodeError as erro:
+        raise ValueError("O arquivo não está em UTF-8.") from erro
+    profundidade = 0
+    dentro_de_string = False
+    escapado = False
+    for caractere in texto:
+        if dentro_de_string:
+            if escapado:
+                escapado = False
+            elif caractere == "\\":
+                escapado = True
+            elif caractere == '"':
+                dentro_de_string = False
+        elif caractere == '"':
+            dentro_de_string = True
+        elif caractere in "{[":
+            profundidade += 1
+            if profundidade > LIMITE_PROFUNDIDADE:
+                raise ValueError("O Bundle excede 64 níveis de aninhamento.")
+        elif caractere in "}]":
+            profundidade = max(0, profundidade - 1)
+    try:
+        return json.loads(texto)
+    except json.JSONDecodeError as erro:
+        raise ValueError(f"JSON inválido: linha {erro.lineno}, coluna {erro.colno}.") from erro
+
+
+def validacao_json(bundle: object) -> dict[str, list[dict[str, Any]]]:
+    """Valide dados JSON e converta os achados para uma resposta serializável."""
+    if _excede_profundidade(bundle):
+        raise ValueError("O Bundle excede 64 níveis de aninhamento.")
+    tamanho = len(json.dumps(bundle, ensure_ascii=False).encode("utf-8"))
+    if tamanho > LIMITE_BYTES:
+        raise ValueError("O Bundle excede 10 MB.")
+    return {"achados": [asdict(achado) for achado in validar(cast(Mapping[str, Any], bundle))]}
