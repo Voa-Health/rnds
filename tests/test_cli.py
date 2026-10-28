@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import rnds.__main__ as cli
+import rnds._consulta as consulta
 from rnds.__main__ import main
 from rnds.sistemas import CNS, CPF
 from rnds.validacao import LIMITE_BYTES
@@ -98,3 +99,19 @@ def test_cli_validacao_arquivo_stdin_e_erros(tmp_path: Path, monkeypatch, capsys
     erro = capsys.readouterr().err
     assert "10 MB" in erro
     assert "Traceback" not in erro
+    bundle_compacto = {
+        "resourceType": "Bundle",
+        "entry": [
+            {"resource": {"subject": {"reference": "Patient/ausente"}}},
+        ],
+    }
+    conteudo_compacto = json.dumps(bundle_compacto, separators=(",", ":"))
+    limite = len(conteudo_compacto.encode("utf-8"))
+    assert len(json.dumps(bundle_compacto).encode("utf-8")) > limite
+    monkeypatch.setattr(consulta, "LIMITE_BYTES", limite)
+    monkeypatch.setattr(cli, "LIMITE_BYTES", limite)
+    compacto = tmp_path / "compacto.json"
+    compacto.write_text(conteudo_compacto, encoding="utf-8")
+    assert consulta.validacao_json(bundle_compacto)["achados"][0]["code"] == "RNDS-REF-001"
+    assert main(["validate", str(compacto)]) == 1
+    assert json.loads(capsys.readouterr().out)["achados"][0]["code"] == "RNDS-REF-001"

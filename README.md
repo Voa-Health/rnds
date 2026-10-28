@@ -74,12 +74,17 @@ cat bundle.json | rnds validate -
 ```
 
 A validação verifica que a entrada seja um Bundle, que `fullUrl` não se repita,
-que referências relativas ou URN sejam resolvidas, que CPF, CNS e CNES sejam válidos
-para seus sistemas, que sistemas `urn:voa:br:` indiquem o sistema oficial conhecido,
+que referências relativas (`Tipo/id` e `Tipo/id/_history/v`) ou URN
+(`urn:uuid:` e `urn:oid:`) sejam resolvidas, que CPF, CNS e CNES sejam válidos para
+seus sistemas, que sistemas `urn:voa:br:` mapeados indiquem o sistema oficial,
 que códigos pertençam aos CodeSystems empacotados e que o display corresponda ao conceito.
 Erros retornam código de saída `1`; somente avisos ou nenhum achado retornam `0`.
 Problemas de leitura, JSON ou limites retornam `2`. O arquivo pode ter até 10 MB e
 64 níveis de aninhamento.
+
+A validação de referências não verifica referências absolutas `http(s)`, referências
+contidas iniciadas por `#` nem formatos fora de `Tipo/id`, `Tipo/id/_history/v`,
+`urn:uuid:` e `urn:oid:`.
 
 Este recurso não verifica perfis completos de StructureDefinition, binding de ValueSet
 por elemento, nem envia dados ou se conecta à RNDS.
