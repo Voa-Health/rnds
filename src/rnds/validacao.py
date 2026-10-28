@@ -58,7 +58,7 @@ _IDENTIFICADORES = {
 
 def _excede_profundidade(valor: object) -> bool:
     """Informe se uma estrutura JSON excede a profundidade permitida."""
-    if not isinstance(valor, (dict, list)):
+    if not isinstance(valor, (Mapping, list)):
         return False
     pendentes: list[tuple[object, int]] = [(valor, 1)]
     while pendentes:
@@ -66,14 +66,14 @@ def _excede_profundidade(valor: object) -> bool:
         if profundidade > LIMITE_PROFUNDIDADE:
             return True
         filhos: Iterable[object]
-        if isinstance(atual, dict):
+        if isinstance(atual, Mapping):
             filhos = atual.values()
         elif isinstance(atual, list):
             filhos = atual
         else:
             continue
         pendentes.extend(
-            (filho, profundidade + 1) for filho in filhos if isinstance(filho, (dict, list))
+            (filho, profundidade + 1) for filho in filhos if isinstance(filho, (Mapping, list))
         )
     return False
 
@@ -97,7 +97,7 @@ def _referencias(bundle: Mapping[str, Any]) -> tuple[set[str], set[str], set[int
     repetidos: set[int] = set()
     recursos: set[str] = set()
     for indice, entrada in enumerate(_entradas(bundle)):
-        if not isinstance(entrada, dict):
+        if not isinstance(entrada, Mapping):
             continue
         url = entrada.get("fullUrl")
         if isinstance(url, str):
@@ -106,7 +106,7 @@ def _referencias(bundle: Mapping[str, Any]) -> tuple[set[str], set[str], set[int
             if contagens[url] > 1:
                 repetidos.add(indice)
         recurso = entrada.get("resource")
-        if isinstance(recurso, dict):
+        if isinstance(recurso, Mapping):
             tipo = recurso.get("resourceType")
             identificador = recurso.get("id")
             if isinstance(tipo, str) and isinstance(identificador, str):
@@ -137,7 +137,7 @@ def _achado(codigo: str, caminho: str, mensagem: str | None = None) -> Achado:
 
 
 def _validar_identificador(
-    valor: dict[str, Any],
+    valor: Mapping[str, Any],
     caminho: str,
     achados: list[Achado],
 ) -> None:
@@ -158,7 +158,11 @@ def _validar_identificador(
         achados.append(_achado("RNDS-ID-004", f"{caminho}.system", mensagem))
 
 
-def _validar_coding(valor: dict[str, Any], caminho: str, achados: list[Achado]) -> None:
+def _validar_coding(
+    valor: Mapping[str, Any],
+    caminho: str,
+    achados: list[Achado],
+) -> None:
     """Confira códigos e displays de sistemas empacotados."""
     sistema = valor.get("system")
     codigo = valor.get("code")
@@ -195,7 +199,7 @@ def _visitar(
     ]
     while pilha:
         atual, caminho, chave, identificador, coding, indice_entrada = pilha.pop()
-        if isinstance(atual, dict):
+        if isinstance(atual, Mapping):
             if indice_entrada is not None and indice_entrada in repetidos:
                 achados.append(_achado("RNDS-BUNDLE-002", f"{caminho}.fullUrl"))
             if identificador:
@@ -213,7 +217,7 @@ def _visitar(
                             filho,
                             caminho_filho,
                             nome,
-                            nome == "identifier" and isinstance(filho, dict),
+                            nome == "identifier" and isinstance(filho, Mapping),
                             False,
                             None,
                         )
@@ -227,8 +231,8 @@ def _visitar(
                         filho,
                         caminho_filho,
                         chave,
-                        chave == "identifier" and isinstance(filho, dict),
-                        chave == "coding" and isinstance(filho, dict),
+                        chave == "identifier" and isinstance(filho, Mapping),
+                        chave == "coding" and isinstance(filho, Mapping),
                         indice if caminho == "Bundle.entry" else None,
                     )
                 )
@@ -239,10 +243,10 @@ def _visitar(
     return achados
 
 
-def validar(bundle: object) -> list[Achado]:
+def validar(bundle: Mapping[str, Any]) -> list[Achado]:
     """Valide um Bundle com as regras offline incluídas no pacote."""
     if (
-        isinstance(bundle, dict)
+        isinstance(bundle, Mapping)
         and bundle.get("resourceType") == "Bundle"
         and _excede_profundidade(bundle)
     ):

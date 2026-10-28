@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import MappingProxyType
 
 import pytest
 
@@ -29,6 +30,19 @@ def _bundle_com_niveis(niveis: int) -> dict[str, object]:
 
 def test_fixtures_cobrem_catalogo_fechado_e_severidades() -> None:
     assert validar(_fixture("valido.json")) == []
+    bundle_imutavel = MappingProxyType(
+        {
+            "resourceType": "Bundle",
+            "entry": [
+                {
+                    "resource": {
+                        "identifier": [{"system": CPF, "value": "123"}],
+                    }
+                }
+            ],
+        }
+    )
+    assert any(achado.code == "RNDS-ID-001" for achado in validar(bundle_imutavel))
     emitidos: set[str] = set()
     for caminho in sorted(_FIXTURAS.glob("rnds-*.json")):
         achados = validar(_fixture(caminho.name))

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import asdict
-from typing import Any
+from typing import Any, cast
 
 from . import cnes, cns, cpf
 from . import sistemas as identificadores
@@ -103,4 +104,4 @@ def validacao_json(bundle: object) -> dict[str, list[dict[str, Any]]]:
     tamanho = len(json.dumps(bundle, ensure_ascii=False).encode("utf-8"))
     if tamanho > LIMITE_BYTES:
         raise ValueError("O Bundle excede 10 MB.")
-    return {"achados": [asdict(achado) for achado in validar(bundle)]}
+    return {"achados": [asdict(achado) for achado in validar(cast(Mapping[str, Any], bundle))]}
