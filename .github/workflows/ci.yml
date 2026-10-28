@@ -75,6 +75,7 @@ jobs:
       - run: python -m venv /tmp/rnds-base
       - run: wheel=$(printf '%s\n' dist/*.whl) && /tmp/rnds-base/bin/pip install "$wheel"
       - run: /tmp/rnds-base/bin/rnds cns 712345678901236
+      - run: /tmp/rnds-base/bin/rnds validate tests/fixtures/bundles/valido.json
 
   mcp:
     runs-on: ubuntu-latest

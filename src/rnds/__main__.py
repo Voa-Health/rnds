@@ -12,9 +12,12 @@ from . import __version__, cnes, cns, cpf
 from ._consulta import (
     conceitos_json,
     identificador_payload,
+    ler_bundle,
     sistemas_json,
+    validacao_json,
 )
 from .codigos import valido
+from .validacao import LIMITE_BYTES
 
 _iniciar_mcp: Callable[[], None] | None
 try:
@@ -55,6 +58,8 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     codigos.add_argument("sistema", nargs="?")
     codigos.add_argument("codigo", nargs="?")
     codigos.add_argument("--origem")
+    validar = comandos.add_parser("validate", help="validar um Bundle FHIR offline")
+    validar.add_argument("arquivo")
     comandos.add_parser("mcp", help="iniciar o servidor MCP local em stdio")
     return parser.parse_args(argv)
 
@@ -81,6 +86,25 @@ def _codigos(sistema: str | None, codigo: str | None, origem: str | None) -> int
     return 0 if valido(sistema, codigo, origem) else 1
 
 
+def _validar_arquivo(nome: str) -> int:
+    """Leia, valide e exiba os achados de um arquivo ou da entrada padrão."""
+    try:
+        if nome == "-":
+            conteudo = sys.stdin.buffer.read(LIMITE_BYTES + 1)
+        else:
+            with open(nome, "rb") as arquivo:
+                conteudo = arquivo.read(LIMITE_BYTES + 1)
+    except FileNotFoundError:
+        sys.stderr.write(f"Arquivo não encontrado: {nome}\n")
+        return _CODIGO_USO
+    except OSError as erro:
+        sys.stderr.write(f"Não foi possível ler {nome}: {erro}\n")
+        return _CODIGO_USO
+    payload = validacao_json(ler_bundle(conteudo))
+    sys.stdout.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+    return 1 if any(item["severity"] == "error" for item in payload["achados"]) else 0
+
+
 def mcp_main() -> int:
     """Inicie o servidor MCP ou informe como instalar o extra."""
     if _iniciar_mcp is None:
@@ -103,6 +127,8 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if payload["valido"] else 1
         if args.comando == "codigos":
             return _codigos(args.sistema, args.codigo, args.origem)
+        if args.comando == "validate":
+            return _validar_arquivo(args.arquivo)
         return mcp_main()
     except ValueError as erro:
         sys.stderr.write(f"{erro}\n")

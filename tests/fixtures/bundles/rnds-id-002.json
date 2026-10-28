@@ -1,0 +1,16 @@
+{
+  "resourceType": "Bundle",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "identifier": [
+          {
+            "system": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cns",
+            "value": "123"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -51,6 +51,35 @@ identificador = para_oficial({"system": LOCAL_CPF, "value": "98765432100"})
 print(identificador)
 ```
 
-Instale `pip install "rnds[mcp]"` para iniciar `rnds mcp` ou `rnds-mcp`. O servidor usa transporte stdio e consulta os mesmos dados locais da biblioteca.
+Instale `pip install "rnds[mcp]"` para iniciar `rnds mcp` ou `rnds-mcp`. O servidor usa transporte stdio e consulta os mesmos dados locais da biblioteca, incluindo `rnds_validate` para validar Bundles.
 
-Os valores nos exemplos são sintéticos. A biblioteca não valida Bundles FHIR nem acessa serviços hospedados.
+Os valores nos exemplos são sintéticos. A biblioteca não acessa serviços hospedados.
+
+## Validar um Bundle
+
+Valide um Bundle FHIR localmente, sem conexão ou envio à RNDS:
+
+```python
+from rnds import validar
+
+bundle = {"resourceType": "Bundle", "type": "collection", "entry": []}
+achados = validar(bundle)
+```
+
+Também é possível validar um arquivo pela linha de comando ou ler da entrada padrão:
+
+```sh
+rnds validate bundle.json
+cat bundle.json | rnds validate -
+```
+
+A validação verifica que a entrada seja um Bundle, que `fullUrl` não se repita,
+que referências relativas ou URN sejam resolvidas, que CPF, CNS e CNES sejam válidos
+para seus sistemas, que sistemas `urn:voa:br:` indiquem o sistema oficial conhecido,
+que códigos pertençam aos CodeSystems empacotados e que o display corresponda ao conceito.
+Erros retornam código de saída `1`; somente avisos ou nenhum achado retornam `0`.
+Problemas de leitura, JSON ou limites retornam `2`. O arquivo pode ter até 10 MB e
+64 níveis de aninhamento.
+
+Este recurso não verifica perfis completos de StructureDefinition, binding de ValueSet
+por elemento, nem envia dados ou se conecta à RNDS.

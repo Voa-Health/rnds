@@ -1,0 +1,25 @@
+{
+  "resourceType": "Bundle",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:referencias",
+      "resource": {
+        "resourceType": "Patient",
+        "contact": [
+          {
+            "organization": {
+              "reference": "Organization/ausente"
+            }
+          }
+        ],
+        "extension": [
+          {
+            "valueReference": {
+              "reference": "urn:uuid:ausente"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

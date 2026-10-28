@@ -1,0 +1,16 @@
+{
+  "resourceType": "Bundle",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "identifier": [
+          {
+            "system": "urn:voa:br:cpf",
+            "value": "98765432100"
+          }
+        ]
+      }
+    }
+  ]
+}

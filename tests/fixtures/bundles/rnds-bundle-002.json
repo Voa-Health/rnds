@@ -1,0 +1,17 @@
+{
+  "resourceType": "Bundle",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:duplicado",
+      "resource": {
+        "resourceType": "Patient"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:duplicado",
+      "resource": {
+        "resourceType": "Organization"
+      }
+    }
+  ]
+}
