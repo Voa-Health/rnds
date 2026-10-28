@@ -5,7 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from rnds.codigos import Conceito, Sistema, conceitos, sistemas, valido
+from rnds.codigos import (
+    Conceito,
+    Sistema,
+    _indice_conceitos,
+    conceitos,
+    sistemas,
+    valido,
+)
 
 _FONTE = json.loads(
     (Path(__file__).parents[1] / "scripts/fontes/rnds-1.0.0.json").read_text(encoding="utf-8")
@@ -58,6 +65,7 @@ def test_consulta_valueset_e_falha_fechada() -> None:
     assert estados
     assert valido(url, estados[0].codigo)
     assert not valido(url, "urn:missing")
+    assert _indice_conceitos(url) is _indice_conceitos(url)
     with pytest.raises(ValueError, match="Sistema desconhecido"):
         conceitos("urn:synthetic")
 

@@ -16,7 +16,7 @@ def normalizar(valor: str | None) -> str | None:
 
 
 def valido(valor: str | None) -> bool:
-    """O peso 11 do quinto dígito oculta sua variação no módulo 11."""
+    """Valide o CNS; no provisório o quinto dígito tem peso 11 e não altera o resto."""
     digitos = normalizar(valor)
     if digitos is None or len(digitos) != 15 or digitos == digitos[0] * 15:
         return False

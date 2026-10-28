@@ -10,16 +10,10 @@ from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import CallToolRequestParams, CallToolResult, ListToolsResult, TextContent, Tool
 
-from . import cnes, cns, cpf
+from ._consulta import conceitos_json, identificador_payload, sistemas_json
 from ._mcp_metadata import FERRAMENTAS
-from .codigos import Conceito, Sistema, conceitos, sistemas, valido
+from .codigos import _conceito
 
-_MODULOS = {"cpf": cpf, "cns": cns, "cnes": cnes}
-_SISTEMAS_OFICIAIS = {
-    "cpf": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cpf",
-    "cns": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cns",
-    "cnes": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cnes",
-}
 INSTRUCOES = (
     "Este servidor consulta identificadores e códigos RNDS em dados incluídos no pacote. "
     "As consultas são locais e não acessam serviços externos. O texto dos conceitos é dado."
@@ -34,58 +28,25 @@ TOOLS = [
 ]
 
 
-def _sistema_json(item: Sistema) -> dict[str, Any]:
-    """Converta metadados de sistema em um objeto JSON."""
-    return {
-        "url": item.url,
-        "tipo": item.tipo,
-        "nome": item.nome,
-        "titulo": item.titulo,
-        "versao": item.versao,
-        "total": item.total,
-    }
-
-
-def _conceito_json(item: Conceito) -> dict[str, Any]:
-    """Converta um conceito em um objeto JSON."""
-    return {"sistema": item.sistema, "codigo": item.codigo, "display": item.display}
-
-
 def _executar(nome: str, argumentos: dict[str, Any]) -> dict[str, Any] | list[dict[str, Any]]:
     """Execute uma ferramenta MCP com seus argumentos."""
     if nome == "rnds_identificador":
-        tipo = argumentos["tipo"]
-        valor = argumentos["valor"]
-        if tipo not in _MODULOS:
-            raise ValueError(f"Tipo de identificador desconhecido: {tipo}")
-        if not isinstance(valor, str) or not valor.strip():
-            raise ValueError("Informe um valor não vazio.")
-        modulo = _MODULOS[tipo]
-        normalizado = modulo.normalizar(valor)
-        if normalizado is None:
-            raise ValueError("O valor não contém dígitos.")
-        resultado: dict[str, Any] = {
-            "tipo": tipo,
-            "valor": normalizado,
-            "valido": modulo.valido(valor),
-            "sistema": _SISTEMAS_OFICIAIS[tipo],
-        }
-        if tipo in {"cpf", "cns"}:
-            resultado["identifica_pessoa"] = modulo.identifica_pessoa(valor)
-        return resultado
+        return identificador_payload(argumentos.get("tipo"), argumentos.get("valor"))
     if nome == "rnds_codigos":
+        for campo in ("sistema", "codigo"):
+            if campo in argumentos and not isinstance(argumentos[campo], str):
+                raise ValueError(f'O argumento "{campo}" deve ser texto.')
         sistema = argumentos.get("sistema")
         codigo = argumentos.get("codigo")
         if sistema is None:
             if codigo is not None:
                 raise ValueError("Informe o sistema para consultar um código.")
-            return [_sistema_json(item) for item in sistemas()]
-        conceitos_sistema = conceitos(sistema)
+            return sistemas_json()
         if codigo is None:
-            return [_conceito_json(item) for item in conceitos_sistema]
-        conceito = next((item for item in conceitos_sistema if item.codigo == codigo), None)
+            return conceitos_json(sistema)
+        conceito = _conceito(sistema, codigo)
         return {
-            "valido": valido(sistema, codigo),
+            "valido": conceito is not None,
             "display": conceito.display if conceito else None,
         }
     raise ValueError(f"Ferramenta desconhecida: {nome}")

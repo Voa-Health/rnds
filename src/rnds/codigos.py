@@ -73,4 +73,16 @@ def conceitos(sistema: str) -> tuple[Conceito, ...]:
 
 def valido(sistema: str, codigo: str) -> bool:
     """Confira se o código pertence ao sistema informado."""
-    return any(item.codigo == codigo for item in conceitos(sistema))
+    return codigo in _indice_conceitos(sistema)
+
+
+@cache
+def _indice_conceitos(sistema: str) -> dict[str, Conceito]:
+    indice: dict[str, Conceito] = {}
+    for item in conceitos(sistema):
+        indice.setdefault(item.codigo, item)
+    return indice
+
+
+def _conceito(sistema: str, codigo: str) -> Conceito | None:
+    return _indice_conceitos(sistema).get(codigo)

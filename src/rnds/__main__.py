@@ -9,7 +9,12 @@ from collections.abc import Callable
 from typing import Any, NoReturn
 
 from . import __version__, cnes, cns, cpf
-from .codigos import Conceito, Sistema, conceitos, sistemas, valido
+from ._consulta import (
+    conceitos_json,
+    identificador_payload,
+    sistemas_json,
+)
+from .codigos import valido
 
 _iniciar_mcp: Callable[[], None] | None
 try:
@@ -58,56 +63,15 @@ def _emitir(dados: Any) -> None:
     sys.stdout.write(json.dumps(dados, ensure_ascii=False, sort_keys=True) + "\n")
 
 
-def _identificador(tipo: str, valor: str) -> tuple[dict[str, Any], int]:
-    """Monte o resultado de um identificador."""
-    if not valor.strip():
-        raise ValueError("Informe um valor não vazio.")
-    modulo = _TIPOS[tipo]
-    normalizado = modulo.normalizar(valor)
-    if normalizado is None:
-        raise ValueError("O valor não contém dígitos.")
-    payload: dict[str, Any] = {
-        "tipo": tipo,
-        "valor": normalizado,
-        "valido": modulo.valido(valor),
-        "sistema": {
-            "cpf": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cpf",
-            "cns": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cns",
-            "cnes": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cnes",
-        }[tipo],
-    }
-    if tipo in {"cpf", "cns"}:
-        payload["identifica_pessoa"] = modulo.identifica_pessoa(valor)
-    return payload, 0 if payload["valido"] else 1
-
-
-def _serializar_sistema(item: Sistema) -> dict[str, Any]:
-    """Converta os metadados do sistema para JSON."""
-    return {
-        "url": item.url,
-        "tipo": item.tipo,
-        "nome": item.nome,
-        "titulo": item.titulo,
-        "versao": item.versao,
-        "total": item.total,
-    }
-
-
-def _serializar_conceito(item: Conceito) -> dict[str, Any]:
-    """Converta o conceito para JSON."""
-    return {"sistema": item.sistema, "codigo": item.codigo, "display": item.display}
-
-
 def _codigos(sistema: str | None, codigo: str | None) -> int:
     """Liste sistemas, conceitos ou valide um código."""
     if sistema is None:
         if codigo is not None:
             raise ValueError("Informe o sistema para consultar um código.")
-        _emitir([_serializar_sistema(item) for item in sistemas()])
+        _emitir(sistemas_json())
         return 0
-    encontrados = conceitos(sistema)
     if codigo is None:
-        _emitir([_serializar_conceito(item) for item in encontrados])
+        _emitir(conceitos_json(sistema))
         return 0
     return 0 if valido(sistema, codigo) else 1
 
@@ -129,9 +93,9 @@ def main(argv: list[str] | None = None) -> int:
         return erro.code if isinstance(erro.code, int) else 0
     try:
         if args.comando in _TIPOS:
-            payload, codigo = _identificador(args.comando, args.valor)
+            payload = identificador_payload(args.comando, args.valor)
             _emitir(payload)
-            return codigo
+            return 0 if payload["valido"] else 1
         if args.comando == "codigos":
             return _codigos(args.sistema, args.codigo)
         return mcp_main()

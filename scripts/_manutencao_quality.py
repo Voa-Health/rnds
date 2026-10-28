@@ -20,11 +20,15 @@ LIMITES = {
     "test_functions": 36,
 }
 _TERMOS = re.compile(
-    r"charcot|voa-backend|termx|(?<!build-)backend|"
-    r"\b(?:PRD|R[123]|be#\d+)\b|"
-    r"\b(?:issue|pull request|US\d+|D[0-9]{1,2})\b|"
-    r"\b(?:migrad[oa]s?|histórico|história|legad[oa])\b|"
-    r"\b(?:antes|agora)\b",
+    r"charcot|voa-backend|api\.voa\.health|"
+    r"\bPRD\b|\bUS\d+\b|\bD[0-9]{1,2}\b|"
+    r"(?<!SSE-)(?<!AWS::)\bS[1-7][bc]?\b(?![.:/])(?!\s+cp\b)|"
+    r"(?<!official-)\bPR\b|\bissue\b|pull request|"
+    r"\bsess[aã]o(?:\s+S[1-7])?\b|legad|legacy|portad[oa] de|migrad|"
+    r"nesta vers[aã]o|uso futuro|por enquanto|\bTODO\b|FIXME|"
+    r"(?<!release/)(?<!/)\bv1\b(?!\.\d)|antes/agora|"
+    r"termx|(?<!build-)backend|\bR[123]\b|be#\d+|"
+    r"histórico|história|infisical|\b\d{12}\b",
     re.IGNORECASE,
 )
 

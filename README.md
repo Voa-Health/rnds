@@ -37,6 +37,15 @@ print(conceitos(url))
 print(valido(url, "B"))
 ```
 
+Converta um identificador local para o sistema oficial sem alterar seu valor:
+
+```python
+from rnds.sistemas import LOCAL_CPF, para_oficial
+
+identificador = para_oficial({"system": LOCAL_CPF, "value": "98765432100"})
+print(identificador)
+```
+
 Instale `pip install "rnds[mcp]"` para iniciar `rnds mcp` ou `rnds-mcp`. O servidor usa transporte stdio e consulta os mesmos dados locais da biblioteca.
 
 Os valores nos exemplos são sintéticos. A biblioteca não valida Bundles FHIR nem acessa serviços hospedados.

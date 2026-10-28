@@ -33,6 +33,15 @@ def test_validacao_cns_definitivo_provisorio_e_invalidos() -> None:
         assert not cns.valido(valor)
 
 
+def test_cns_definitivo_com_separador_001() -> None:
+    valido, invalido = "100000000060018", "100000000060008"
+    assert valido[:11] == invalido[:11]
+    assert valido[11:14] == "001"
+    assert invalido[11:14] == "000"
+    assert cns.valido(valido)
+    assert not cns.valido(invalido)
+
+
 def test_validacao_cnes() -> None:
     for valor in _CASOS["cnes"]["validos"]:
         assert cnes.valido(valor)
