@@ -1,0 +1,77 @@
+{
+  "resourceType": "Bundle",
+  "type": "document",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:00000000-0000-4000-8000-000000000001",
+      "resource": {
+        "resourceType": "Composition",
+        "status": "final",
+        "subject": {
+          "reference": "urn:uuid:00000000-0000-4000-8000-000000000002"
+        },
+        "author": [
+          {
+            "reference": "urn:uuid:00000000-0000-4000-8000-000000000003"
+          }
+        ],
+        "section": [
+          {
+            "entry": [
+              {
+                "reference": "urn:uuid:00000000-0000-4000-8000-000000000004"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:00000000-0000-4000-8000-000000000002",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "paciente",
+        "identifier": [
+          {
+            "system": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cpf",
+            "value": "98765432100"
+          },
+          {
+            "system": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cns",
+            "value": "712345678901236"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:00000000-0000-4000-8000-000000000003",
+      "resource": {
+        "resourceType": "Organization",
+        "identifier": [
+          {
+            "system": "http://rnds.saude.gov.br/fhir/r4/NamingSystem/cnes",
+            "value": "1234567"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:00000000-0000-4000-8000-000000000004",
+      "resource": {
+        "resourceType": "Condition",
+        "subject": {
+          "reference": "urn:uuid:00000000-0000-4000-8000-000000000002"
+        },
+        "code": {
+          "coding": [
+            {
+              "system": "https://rnds-fhir.saude.gov.br/CodeSystem/BRTerminologiaSuspeitaDiagnostica",
+              "code": "B342",
+              "display": "Infecção por coronavírus de localização não especificada"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

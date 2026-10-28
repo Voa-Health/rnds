@@ -1,0 +1,3 @@
+- [ ] Testes e verificações executados.
+- [ ] Documentação atualizada.
+- [ ] Apenas dados sintéticos incluídos.
