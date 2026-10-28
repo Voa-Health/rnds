@@ -1,6 +1,6 @@
 # Registro de alterações
 
-## Não lançado
+## 0.1.0
 
 - Biblioteca offline para normalizar e validar CPF, CNS e CNES.
 - Sistemas locais e oficiais de identificadores brasileiros.
