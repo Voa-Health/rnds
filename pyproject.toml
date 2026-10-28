@@ -1,0 +1,110 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rnds"
+version = "0.1.0"
+description = "Identificadores e códigos da RNDS em uma biblioteca Python offline."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Voa Health" }]
+keywords = ["RNDS", "FHIR", "CPF", "CNS", "CNES", "saúde"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.30,<3"]
+
+[project.scripts]
+rnds = "rnds.__main__:main"
+rnds-mcp = "rnds.__main__:mcp_main"
+
+[project.urls]
+Homepage = "https://github.com/Voa-Health/rnds"
+Repository = "https://github.com/Voa-Health/rnds"
+Issues = "https://github.com/Voa-Health/rnds/issues"
+
+[dependency-groups]
+dev = ["mypy>=1.13", "pytest>=8.3", "ruff>=0.8"]
+
+[tool.hatch.version]
+path = "src/rnds/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rnds"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/rnds",
+  "scripts",
+  "tests",
+  "README.md",
+  "LICENSE",
+  "AGENTS.md",
+  "CLAUDE.md",
+  "CONTRIBUTING.md",
+  "SECURITY.md",
+  "CODE_OF_CONDUCT.md",
+  "CHANGELOG.md",
+  "DATA_SOURCES.md",
+  "llms.txt",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RET", "PL", "T20", "ERA", "D", "RUF"]
+ignore = [
+  "D105",
+  "D107",
+  "D203",
+  "D213",
+  "D401",
+  "PLR0911",
+  "PLR0912",
+  "PLR0915",
+  "PLR2004",
+  "PLC0415",
+]
+allowed-confusables = ["×"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D", "PLR2004"]
+"scripts/_manutencao_quality.py" = ["T201"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.lint.pylint]
+max-args = 6
+max-branches = 12
+max-returns = 6
+max-statements = 40
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+pythonpath = [".", "src"]

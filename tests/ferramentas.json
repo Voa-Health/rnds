@@ -1,0 +1,41 @@
+[
+  {
+    "description": "Normalize e confira um identificador brasileiro.",
+    "inputSchema": {
+      "properties": {
+        "tipo": {
+          "enum": [
+            "cpf",
+            "cns",
+            "cnes"
+          ],
+          "type": "string"
+        },
+        "valor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tipo",
+        "valor"
+      ],
+      "type": "object"
+    },
+    "name": "rnds_identificador"
+  },
+  {
+    "description": "Consulte sistemas e códigos incluídos na RNDS.",
+    "inputSchema": {
+      "properties": {
+        "codigo": {
+          "type": "string"
+        },
+        "sistema": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "rnds_codigos"
+  }
+]

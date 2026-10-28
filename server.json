@@ -1,0 +1,38 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "health.voa/rnds",
+  "title": "rnds",
+  "description": "Consulta offline de identificadores e códigos RNDS.",
+  "version": "0.1.0",
+  "websiteUrl": "https://github.com/Voa-Health/rnds",
+  "repository": {
+    "url": "https://github.com/Voa-Health/rnds",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "rnds",
+      "version": "0.1.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeArguments": [
+        {
+          "type": "named",
+          "name": "--with",
+          "value": "rnds[mcp]==0.1.0",
+          "description": "Instala o extra MCP na mesma versão."
+        }
+      ],
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ]
+    }
+  ]
+}
