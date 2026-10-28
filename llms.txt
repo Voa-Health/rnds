@@ -1,0 +1,9 @@
+# RNDS para Python
+
+Biblioteca Python offline para normalização de CPF, CNS e CNES, consulta a CodeSystems e ValueSets da RNDS, CLI e servidor MCP local.
+
+- [Início rápido](README.md)
+- [Fontes de dados](DATA_SOURCES.md)
+- [Contribuição](CONTRIBUTING.md)
+
+O pacote não acessa serviços hospedados nem transmite dados.

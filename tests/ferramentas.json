@@ -1,0 +1,44 @@
+[
+  {
+    "description": "Normalize e confira um identificador brasileiro.",
+    "inputSchema": {
+      "properties": {
+        "tipo": {
+          "enum": [
+            "cpf",
+            "cns",
+            "cnes"
+          ],
+          "type": "string"
+        },
+        "valor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tipo",
+        "valor"
+      ],
+      "type": "object"
+    },
+    "name": "rnds_identificador"
+  },
+  {
+    "description": "Consulte códigos; display é o texto comum a todos os conceitos ou null se houver ambiguidade ou nenhum resultado.",
+    "inputSchema": {
+      "properties": {
+        "codigo": {
+          "type": "string"
+        },
+        "origem": {
+          "type": "string"
+        },
+        "sistema": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "rnds_codigos"
+  }
+]
