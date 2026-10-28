@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import io
 import json
+import logging
 import re
 import subprocess
 import tokenize
@@ -154,6 +155,93 @@ def _verificar_python(root: Path) -> bool:
     return correto
 
 
+def _report_violation(path: Path | str, line: int, message: str) -> None:
+    """Registre uma divergência do repositório."""
+    logging.error("%s:%d: %s", Path(path).as_posix(), line, message)
+
+
+def _check_release_versions(root: Path) -> bool:
+    """Confira se as versões do pacote e do registro MCP coincidem."""
+    project_text = (root / "pyproject.toml").read_text(encoding="utf-8")
+    project = re.search(r"(?ms)^\[project\]\s*\n(.*?)(?=^\[|\Z)", project_text)
+    version_match = (
+        re.search(r'(?m)^version\s*=\s*"([^"]+)"\s*$', project.group(1))
+        if project is not None
+        else None
+    )
+    if version_match is None:
+        _report_violation("pyproject.toml", 1, "versão de [project] ausente")
+        return False
+    version = version_match.group(1)
+    correto = True
+
+    init_path = root / "src/rnds/__init__.py"
+    init_text = init_path.read_text(encoding="utf-8")
+    init_match = re.search(
+        r"""^__version__\s*=\s*["']([^"']+)["']""",
+        init_text,
+        flags=re.MULTILINE,
+    )
+    if init_match is None:
+        _report_violation("src/rnds/__init__.py", 1, "__version__ ausente")
+        correto = False
+    elif init_match.group(1) != version:
+        linha = init_text.count("\n", 0, init_match.start()) + 1
+        _report_violation(
+            "src/rnds/__init__.py",
+            linha,
+            "__version__ difere de [project].version",
+        )
+        correto = False
+
+    server_path = root / "server.json"
+    server_text = server_path.read_text(encoding="utf-8")
+    server = json.loads(server_text)
+    if not isinstance(server, dict):
+        _report_violation("server.json", 1, "registro MCP inválido")
+        return False
+    server_lines = server_text.splitlines()
+    linha_versao_servidor = next(
+        (
+            numero
+            for numero, linha in enumerate(server_lines, start=1)
+            if re.match(r'^ {2}"version"\s*:', linha)
+        ),
+        1,
+    )
+    linhas_versoes_pacotes = [
+        numero
+        for numero, linha in enumerate(server_lines, start=1)
+        if re.match(r'^ {6}"version"\s*:', linha)
+    ]
+    if server.get("version") != version:
+        _report_violation(
+            "server.json",
+            linha_versao_servidor,
+            "versão do registro MCP difere de [project].version",
+        )
+        correto = False
+    packages = server.get("packages")
+    if not isinstance(packages, list):
+        _report_violation("server.json", linha_versao_servidor, "lista de pacotes ausente")
+        return False
+    for indice, package in enumerate(packages):
+        linha = linhas_versoes_pacotes[indice] if indice < len(linhas_versoes_pacotes) else 1
+        if not isinstance(package, dict):
+            _report_violation("server.json", linha, f"pacote MCP {indice} inválido")
+            correto = False
+            continue
+        if package.get("version") != version:
+            identificador = package.get("identifier", indice)
+            _report_violation(
+                "server.json",
+                linha,
+                f"versão do pacote MCP {identificador} difere de [project].version",
+            )
+            correto = False
+    return correto
+
+
 def verificar(
     root: Path,
     versao: str,
@@ -165,5 +253,6 @@ def verificar(
     dados = json.loads(fonte.read_text(encoding="utf-8"))
     correto = dados["metadata"]["version"] == versao and dados["metadata"]["sha256"] == sha256
     correto = _verificar_texto(root) and _verificar_python(root) and correto
+    correto = _check_release_versions(root) and correto
     correto = conferir_artefatos() and correto
     return 0 if correto else 1

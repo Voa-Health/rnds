@@ -21,7 +21,12 @@ jobs:
           enable-cache: false
       - run: uv build
       - run: uvx twine check --strict dist/*
-      - run: test -f "dist/rnds-${GITHUB_REF_NAME#v}-py3-none-any.whl"
+      - name: Verify registry versions match tag
+        run: jq -e --arg v "${GITHUB_REF_NAME#v}" '.version == $v and all(.packages[]; .version == $v)' server.json
+      - name: Verify tag matches package version
+        run: test -f "dist/rnds-${GITHUB_REF_NAME#v}-py3-none-any.whl"
+      - name: Verify wheel __version__ matches tag
+        run: uv run --isolated --no-project --with "dist/rnds-${GITHUB_REF_NAME#v}-py3-none-any.whl" python -c 'import os, rnds; assert rnds.__version__ == os.environ["GITHUB_REF_NAME"].removeprefix("v"), rnds.__version__'
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist
