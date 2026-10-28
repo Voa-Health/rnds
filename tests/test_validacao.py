@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from time import perf_counter
 from types import MappingProxyType
 
 import pytest
@@ -43,6 +44,17 @@ def test_fixtures_cobrem_catalogo_fechado_e_severidades() -> None:
         }
     )
     assert any(achado.code == "RNDS-ID-001" for achado in validar(bundle_imutavel))
+    sistema_sem_mapeamento = {
+        "resourceType": "Bundle",
+        "entry": [
+            {
+                "resource": {
+                    "identifier": [{"system": "urn:voa:br:desconhecido", "value": "sintetico"}]
+                }
+            }
+        ],
+    }
+    assert validar(sistema_sem_mapeamento) == []
     emitidos: set[str] = set()
     for caminho in sorted(_FIXTURAS.glob("rnds-*.json")):
         achados = validar(_fixture(caminho.name))
@@ -89,18 +101,123 @@ def test_referencias_ignoradas_e_resolvidas_nao_geram_achados() -> None:
                 "resource": {
                     "resourceType": "Patient",
                     "id": "local",
+                    "meta": {"versionId": "1"},
                     "extension": [
                         {"valueReference": {"reference": "#fragmento"}},
                         {"valueReference": {"reference": "https://externo.test/Patient/1"}},
                         {"valueReference": {"reference": "Patient/local"}},
                         {"valueReference": {"reference": "Patient/local/_history/1"}},
-                        {"valueReference": {"reference": "Patient/fora"}},
                     ],
                 },
             }
         ],
     }
     assert validar(bundle) == []
+    versionado = {
+        "resourceType": "Bundle",
+        "entry": [
+            {
+                "resource": {
+                    "resourceType": "Patient",
+                    "id": "abc",
+                    "meta": {"versionId": "1"},
+                    "extension": [
+                        {"valueReference": {"reference": "Patient/abc/_history/1"}},
+                        {"valueReference": {"reference": "Patient/abc/_history/2"}},
+                        {"valueReference": {"reference": "Patient/abc"}},
+                    ],
+                }
+            }
+        ],
+    }
+    assert [(achado.code, achado.path) for achado in validar(versionado)] == [
+        (
+            "RNDS-REF-001",
+            "Bundle.entry[0].resource.extension[1].valueReference.reference",
+        )
+    ]
+    sem_versao = {
+        "resourceType": "Bundle",
+        "entry": [
+            {"resource": {"resourceType": "Patient", "id": "sem-versao"}},
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "subject": {
+                        "reference": "Patient/sem-versao/_history/1",
+                    },
+                }
+            },
+        ],
+    }
+    assert [achado.code for achado in validar(sem_versao)] == ["RNDS-REF-001"]
+    tipo_diferente = {
+        "resourceType": "Bundle",
+        "entry": [
+            {
+                "fullUrl": "https://exemplo.test/Patient/abc",
+                "resource": {"resourceType": "Observation", "id": "outro"},
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "referenciador",
+                    "subject": {"reference": "Patient/abc"},
+                }
+            },
+        ],
+    }
+    assert [achado.code for achado in validar(tipo_diferente)] == ["RNDS-REF-001"]
+    id_diferente = {
+        "resourceType": "Bundle",
+        "entry": [
+            {
+                "fullUrl": "https://exemplo.test/Patient/abc",
+                "resource": {"resourceType": "Patient", "id": "outro"},
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "subject": {"reference": "Patient/abc"},
+                }
+            },
+        ],
+    }
+    assert [achado.code for achado in validar(id_diferente)] == ["RNDS-REF-001"]
+    id_derivado = {
+        "resourceType": "Bundle",
+        "entry": [
+            {
+                "fullUrl": "https://exemplo.test/Patient/abc",
+                "resource": {"resourceType": "Patient"},
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "subject": {"reference": "Patient/abc"},
+                }
+            },
+        ],
+    }
+    assert validar(id_derivado) == []
+    bundle_performance = {
+        "resourceType": "Bundle",
+        "entry": [
+            {
+                "resource": {
+                    "resourceType": "Patient",
+                    "id": f"paciente-{indice}",
+                    "subject": {"reference": f"Patient/ausente-{indice}"},
+                }
+            }
+            for indice in range(6000)
+        ],
+    }
+    inicio = perf_counter()
+    achados_performance = validar(bundle_performance)
+    duracao = perf_counter() - inicio
+    assert len(achados_performance) == 6000
+    assert duracao < 1.0
 
 
 def test_limites_de_profundidade_e_tamanho() -> None:

@@ -90,12 +90,20 @@ def _entradas(bundle: Mapping[str, Any]) -> list[Any]:
     return entradas if isinstance(entradas, list) else []
 
 
-def _referencias(bundle: Mapping[str, Any]) -> tuple[set[str], set[str], set[int]]:
+def _referencias(
+    bundle: Mapping[str, Any],
+) -> tuple[
+    set[str],
+    set[tuple[str, str]],
+    set[tuple[str, str, str]],
+    set[int],
+]:
     """Indexe fullUrls e identidades de recursos para resolver referências."""
     urls: set[str] = set()
     contagens: dict[str, int] = {}
     repetidos: set[int] = set()
-    recursos: set[str] = set()
+    alvos: set[tuple[str, str]] = set()
+    versoes: set[tuple[str, str, str]] = set()
     for indice, entrada in enumerate(_entradas(bundle)):
         if not isinstance(entrada, Mapping):
             continue
@@ -106,18 +114,40 @@ def _referencias(bundle: Mapping[str, Any]) -> tuple[set[str], set[str], set[int
             if contagens[url] > 1:
                 repetidos.add(indice)
         recurso = entrada.get("resource")
-        if isinstance(recurso, Mapping):
-            tipo = recurso.get("resourceType")
+        if not isinstance(recurso, Mapping):
+            continue
+        tipo = recurso.get("resourceType")
+        if not isinstance(tipo, str):
+            continue
+        if "id" in recurso:
             identificador = recurso.get("id")
-            if isinstance(tipo, str) and isinstance(identificador, str):
-                recursos.add(f"{tipo}/{identificador}")
-    return urls, recursos, repetidos
+            if not isinstance(identificador, str):
+                continue
+        else:
+            if not isinstance(url, str):
+                continue
+            segmentos = url.rsplit("/", 2)
+            if (
+                len(segmentos) != 3
+                or segmentos[1] != tipo
+                or _RELATIVA.fullmatch(f"{tipo}/{segmentos[2]}") is None
+            ):
+                continue
+            identificador = segmentos[2]
+        alvos.add((tipo, identificador))
+        meta = recurso.get("meta")
+        if isinstance(meta, Mapping):
+            versao = meta.get("versionId")
+            if isinstance(versao, str):
+                versoes.add((tipo, identificador, versao))
+    return urls, alvos, versoes, repetidos
 
 
 def _resolvida(
     referencia: str,
     urls: set[str],
-    recursos: set[str],
+    alvos: set[tuple[str, str]],
+    versoes: set[tuple[str, str, str]],
 ) -> bool | None:
     """Resolva uma referência suportada ou ignore formatos externos."""
     if referencia.startswith("#") or referencia.startswith(("http://", "https://")):
@@ -126,8 +156,11 @@ def _resolvida(
         return referencia in urls
     if _RELATIVA.fullmatch(referencia) is None:
         return None
-    tipo_e_id = "/".join(referencia.split("/")[:2])
-    return tipo_e_id in recursos or any(url.endswith(f"/{tipo_e_id}") for url in urls)
+    segmentos = referencia.split("/")
+    identidade = (segmentos[0], segmentos[1])
+    if len(segmentos) == 2:
+        return identidade in alvos
+    return (*identidade, segmentos[3]) in versoes
 
 
 def _achado(codigo: str, caminho: str, mensagem: str | None = None) -> Achado:
@@ -151,11 +184,14 @@ def _validar_identificador(
         achados.append(_achado(regra[1], f"{caminho}.value"))
     if sistema.startswith("urn:voa:br:"):
         oficial = sistemas.para_oficial({"system": sistema})["system"]
-        if oficial == sistema:
-            mensagem = "Não há sistema oficial conhecido para este sistema."
-        else:
-            mensagem = f"Use o sistema oficial {oficial}."
-        achados.append(_achado("RNDS-ID-004", f"{caminho}.system", mensagem))
+        if oficial != sistema:
+            achados.append(
+                _achado(
+                    "RNDS-ID-004",
+                    f"{caminho}.system",
+                    f"Use o sistema oficial {oficial}.",
+                )
+            )
 
 
 def _validar_coding(
@@ -189,7 +225,8 @@ def _validar_coding(
 def _visitar(
     bundle: Mapping[str, Any],
     urls: set[str],
-    recursos: set[str],
+    alvos: set[tuple[str, str]],
+    versoes: set[tuple[str, str, str]],
     repetidos: set[int],
 ) -> list[Achado]:
     """Percorra o documento em pré-ordem e colete os achados."""
@@ -237,7 +274,7 @@ def _visitar(
                     )
                 )
         elif chave == "reference" and isinstance(atual, str):
-            resolvida = _resolvida(atual, urls, recursos)
+            resolvida = _resolvida(atual, urls, alvos, versoes)
             if resolvida is False:
                 achados.append(_achado("RNDS-REF-001", caminho))
     return achados
@@ -253,5 +290,5 @@ def validar(bundle: Mapping[str, Any]) -> list[Achado]:
         raise ValueError("O Bundle excede 64 níveis de aninhamento.")
     if not isinstance(bundle, Mapping) or bundle.get("resourceType") != "Bundle":
         return [_achado("RNDS-BUNDLE-001", "Bundle")]
-    urls, recursos, repetidos = _referencias(bundle)
-    return _visitar(bundle, urls, recursos, repetidos)
+    urls, alvos, versoes, repetidos = _referencias(bundle)
+    return _visitar(bundle, urls, alvos, versoes, repetidos)

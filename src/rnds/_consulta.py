@@ -101,7 +101,8 @@ def validacao_json(bundle: object) -> dict[str, list[dict[str, Any]]]:
     """Valide dados JSON e converta os achados para uma resposta serializável."""
     if _excede_profundidade(bundle):
         raise ValueError("O Bundle excede 64 níveis de aninhamento.")
-    tamanho = len(json.dumps(bundle, ensure_ascii=False).encode("utf-8"))
+    texto = json.dumps(bundle, ensure_ascii=False, separators=(",", ":"))
+    tamanho = len(texto.encode("utf-8"))
     if tamanho > LIMITE_BYTES:
         raise ValueError("O Bundle excede 10 MB.")
     return {"achados": [asdict(achado) for achado in validar(cast(Mapping[str, Any], bundle))]}
