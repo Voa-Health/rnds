@@ -27,11 +27,24 @@ def test_servidor_e_respostas_das_ferramentas() -> None:
     identificador = _executar("rnds_identificador", {"tipo": "cns", "valor": "712345678901236"})
     assert identificador["valido"] is True
     assert _executar("rnds_codigos", {})[0]["tipo"] == "CodeSystem"
+    nacionalidade = "https://rnds-fhir.saude.gov.br/CodeSystem/BRNacionalidade"
+    resultado_nacionalidade = _executar(
+        "rnds_codigos",
+        {"sistema": nacionalidade, "codigo": "B"},
+    )
+    assert resultado_nacionalidade == {
+        "valido": True,
+        "display": "Brasileiro",
+        "conceitos": [
+            {"sistema": nacionalidade, "codigo": "B", "display": "Brasileiro"},
+        ],
+    }
     url = "https://rnds-fhir.saude.gov.br/ValueSet/BRResultadoQualitativoExame-2.0"
     origem_a = "https://rnds-fhir.saude.gov.br/CodeSystem/BRResultadoQualitativoExame"
     origem_b = "https://rnds-fhir.saude.gov.br/CodeSystem/BRTipoResultadoAVIDEZ"
     resultado = _executar("rnds_codigos", {"sistema": url, "codigo": "1"})
     assert resultado["valido"] is True
+    assert resultado["display"] is None
     pares = {(item["sistema"], item["display"]) for item in resultado["conceitos"]}
     assert (origem_a, "Detectável") in pares
     assert (origem_b, "Baixa Avidez") in pares
@@ -41,6 +54,7 @@ def test_servidor_e_respostas_das_ferramentas() -> None:
     )
     assert filtrado == {
         "valido": True,
+        "display": "Baixa Avidez",
         "conceitos": [
             {"sistema": origem_b, "codigo": "1", "display": "Baixa Avidez"},
         ],
@@ -49,7 +63,7 @@ def test_servidor_e_respostas_das_ferramentas() -> None:
         "rnds_codigos",
         {"sistema": url, "codigo": "1", "origem": "urn:synthetic"},
     )
-    assert invalido == {"valido": False, "conceitos": []}
+    assert invalido == {"valido": False, "display": None, "conceitos": []}
 
 
 def test_erro_mcp_para_valores_vazios_e_sistemas_desconhecidos() -> None:

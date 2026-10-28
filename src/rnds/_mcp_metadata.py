@@ -17,7 +17,10 @@ FERRAMENTAS: tuple[dict[str, Any], ...] = (
     },
     {
         "name": "rnds_codigos",
-        "description": "Consulte sistemas e códigos incluídos na RNDS.",
+        "description": (
+            "Consulte códigos; display é o texto comum a todos os conceitos "
+            "ou null se houver ambiguidade ou nenhum resultado."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {

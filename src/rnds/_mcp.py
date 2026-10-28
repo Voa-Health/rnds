@@ -49,8 +49,10 @@ def _executar(nome: str, argumentos: dict[str, Any]) -> dict[str, Any] | list[di
                 raise ValueError("Informe o código para consultar uma origem.")
             return conceitos_json(sistema)
         encontrados = busca_json(sistema, codigo, origem)
+        displays = {item["display"] for item in encontrados}
         return {
             "valido": bool(encontrados),
+            "display": next(iter(displays)) if len(displays) == 1 else None,
             "conceitos": encontrados,
         }
     raise ValueError(f"Ferramenta desconhecida: {nome}")
