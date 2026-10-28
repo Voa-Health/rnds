@@ -9,6 +9,7 @@ from rnds.codigos import (
     Conceito,
     Sistema,
     _indice_conceitos,
+    busca,
     conceitos,
     sistemas,
     valido,
@@ -68,6 +69,27 @@ def test_consulta_valueset_e_falha_fechada() -> None:
     assert _indice_conceitos(url) is _indice_conceitos(url)
     with pytest.raises(ValueError, match="Sistema desconhecido"):
         conceitos("urn:synthetic")
+
+
+def test_busca_preserva_conceitos_de_origens_distintas() -> None:
+    url = "https://rnds-fhir.saude.gov.br/ValueSet/BRResultadoQualitativoExame-2.0"
+    origem_a = "https://rnds-fhir.saude.gov.br/CodeSystem/BRResultadoQualitativoExame"
+    origem_b = "https://rnds-fhir.saude.gov.br/CodeSystem/BRTipoResultadoAVIDEZ"
+    encontrados = busca(url, "1")
+
+    assert len(encontrados) >= 2
+    assert len({item.sistema for item in encontrados}) >= 2
+    pares = {(item.sistema, item.display) for item in encontrados}
+    assert (origem_a, "Detectável") in pares
+    assert (origem_b, "Baixa Avidez") in pares
+    assert busca(url, "1", origem_a) == (
+        next(item for item in encontrados if item.sistema == origem_a),
+    )
+    assert valido(url, "1", origem_a)
+    assert not valido(url, "1", "urn:synthetic")
+    assert busca(url, "inexistente") == ()
+    with pytest.raises(ValueError, match="Sistema desconhecido"):
+        busca("urn:synthetic", "1")
 
 
 def test_expansao_aplica_filtros_e_exclusoes() -> None:

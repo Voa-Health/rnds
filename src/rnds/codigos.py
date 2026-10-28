@@ -71,18 +71,22 @@ def conceitos(sistema: str) -> tuple[Conceito, ...]:
     )
 
 
-def valido(sistema: str, codigo: str) -> bool:
-    """Confira se o código pertence ao sistema informado."""
-    return codigo in _indice_conceitos(sistema)
+def valido(sistema: str, codigo: str, origem: str | None = None) -> bool:
+    """Confira se o código pertence ao sistema e, se informada, à origem."""
+    return bool(busca(sistema, codigo, origem))
+
+
+def busca(sistema: str, codigo: str, origem: str | None = None) -> tuple[Conceito, ...]:
+    """Liste os conceitos do código, opcionalmente filtrados pela origem."""
+    encontrados = _indice_conceitos(sistema).get(codigo, ())
+    if origem is None:
+        return encontrados
+    return tuple(item for item in encontrados if item.sistema == origem)
 
 
 @cache
-def _indice_conceitos(sistema: str) -> dict[str, Conceito]:
-    indice: dict[str, Conceito] = {}
+def _indice_conceitos(sistema: str) -> dict[str, tuple[Conceito, ...]]:
+    agrupados: dict[str, list[Conceito]] = {}
     for item in conceitos(sistema):
-        indice.setdefault(item.codigo, item)
-    return indice
-
-
-def _conceito(sistema: str, codigo: str) -> Conceito | None:
-    return _indice_conceitos(sistema).get(codigo)
+        agrupados.setdefault(item.codigo, []).append(item)
+    return {codigo: tuple(itens) for codigo, itens in agrupados.items()}

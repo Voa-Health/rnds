@@ -30,6 +30,9 @@
         "codigo": {
           "type": "string"
         },
+        "origem": {
+          "type": "string"
+        },
         "sistema": {
           "type": "string"
         }

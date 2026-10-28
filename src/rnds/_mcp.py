@@ -10,9 +10,8 @@ from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import CallToolRequestParams, CallToolResult, ListToolsResult, TextContent, Tool
 
-from ._consulta import conceitos_json, identificador_payload, sistemas_json
+from ._consulta import busca_json, conceitos_json, identificador_payload, sistemas_json
 from ._mcp_metadata import FERRAMENTAS
-from .codigos import _conceito
 
 INSTRUCOES = (
     "Este servidor consulta identificadores e códigos RNDS em dados incluídos no pacote. "
@@ -33,21 +32,26 @@ def _executar(nome: str, argumentos: dict[str, Any]) -> dict[str, Any] | list[di
     if nome == "rnds_identificador":
         return identificador_payload(argumentos.get("tipo"), argumentos.get("valor"))
     if nome == "rnds_codigos":
-        for campo in ("sistema", "codigo"):
+        for campo in ("sistema", "codigo", "origem"):
             if campo in argumentos and not isinstance(argumentos[campo], str):
                 raise ValueError(f'O argumento "{campo}" deve ser texto.')
         sistema = argumentos.get("sistema")
         codigo = argumentos.get("codigo")
+        origem = argumentos.get("origem")
+        if origem is not None and sistema is None:
+            raise ValueError("Informe o sistema para consultar uma origem.")
         if sistema is None:
             if codigo is not None:
                 raise ValueError("Informe o sistema para consultar um código.")
             return sistemas_json()
         if codigo is None:
+            if origem is not None:
+                raise ValueError("Informe o código para consultar uma origem.")
             return conceitos_json(sistema)
-        conceito = _conceito(sistema, codigo)
+        encontrados = busca_json(sistema, codigo, origem)
         return {
-            "valido": conceito is not None,
-            "display": conceito.display if conceito else None,
+            "valido": bool(encontrados),
+            "conceitos": encontrados,
         }
     raise ValueError(f"Ferramenta desconhecida: {nome}")
 

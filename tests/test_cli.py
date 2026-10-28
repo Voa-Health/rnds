@@ -49,6 +49,12 @@ def test_cli_consulta_catalogo_e_codigos(capsys) -> None:
     assert main(["codigos", url, "inexistente"]) == 1
     assert main(["codigos", "urn:synthetic"]) == 2
     assert "Sistema desconhecido" in capsys.readouterr().err
+    url = "https://rnds-fhir.saude.gov.br/ValueSet/BRResultadoQualitativoExame-2.0"
+    origem = "https://rnds-fhir.saude.gov.br/CodeSystem/BRTipoResultadoAVIDEZ"
+    assert main(["codigos", url, "1", "--origem", origem]) == 0
+    assert main(["codigos", url, "1", "--origem", "urn:synthetic"]) == 1
+    assert main(["codigos", url, "--origem", origem]) == 2
+    assert "Informe o código" in capsys.readouterr().err
 
 
 def test_cli_mcp_sem_extra_explica_instalacao(monkeypatch, capsys) -> None:

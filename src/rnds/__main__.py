@@ -54,6 +54,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     codigos = comandos.add_parser("codigos", help="consultar os códigos disponíveis")
     codigos.add_argument("sistema", nargs="?")
     codigos.add_argument("codigo", nargs="?")
+    codigos.add_argument("--origem")
     comandos.add_parser("mcp", help="iniciar o servidor MCP local em stdio")
     return parser.parse_args(argv)
 
@@ -63,8 +64,12 @@ def _emitir(dados: Any) -> None:
     sys.stdout.write(json.dumps(dados, ensure_ascii=False, sort_keys=True) + "\n")
 
 
-def _codigos(sistema: str | None, codigo: str | None) -> int:
+def _codigos(sistema: str | None, codigo: str | None, origem: str | None) -> int:
     """Liste sistemas, conceitos ou valide um código."""
+    if origem is not None and sistema is None:
+        raise ValueError("Informe o sistema para consultar uma origem.")
+    if origem is not None and codigo is None:
+        raise ValueError("Informe o código para consultar uma origem.")
     if sistema is None:
         if codigo is not None:
             raise ValueError("Informe o sistema para consultar um código.")
@@ -73,7 +78,7 @@ def _codigos(sistema: str | None, codigo: str | None) -> int:
     if codigo is None:
         _emitir(conceitos_json(sistema))
         return 0
-    return 0 if valido(sistema, codigo) else 1
+    return 0 if valido(sistema, codigo, origem) else 1
 
 
 def mcp_main() -> int:
@@ -97,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
             _emitir(payload)
             return 0 if payload["valido"] else 1
         if args.comando == "codigos":
-            return _codigos(args.sistema, args.codigo)
+            return _codigos(args.sistema, args.codigo, args.origem)
         return mcp_main()
     except ValueError as erro:
         sys.stderr.write(f"{erro}\n")

@@ -7,7 +7,7 @@ from typing import Any
 
 from . import cnes, cns, cpf
 from . import sistemas as identificadores
-from .codigos import conceitos, sistemas
+from .codigos import busca, conceitos, sistemas
 
 _MODULOS = {"cpf": cpf, "cns": cns, "cnes": cnes}
 _SISTEMAS = {
@@ -50,3 +50,12 @@ def sistemas_json() -> list[dict[str, Any]]:
 def conceitos_json(sistema: str) -> list[dict[str, Any]]:
     """Converta os conceitos de um sistema em dados JSON."""
     return [asdict(item) for item in conceitos(sistema)]
+
+
+def busca_json(
+    sistema: str,
+    codigo: str,
+    origem: str | None = None,
+) -> list[dict[str, Any]]:
+    """Converta os conceitos encontrados em dados JSON."""
+    return [asdict(item) for item in busca(sistema, codigo, origem)]

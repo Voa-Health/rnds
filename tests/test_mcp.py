@@ -11,7 +11,6 @@ from mcp.client.stdio import StdioServerParameters, stdio_client
 
 from rnds._mcp import TOOLS, _executar, _resultado_tool, criar_servidor
 from rnds._mcp_metadata import FERRAMENTAS
-from rnds.codigos import conceitos
 
 _MANIFESTO = json.loads(Path(__file__).with_name("ferramentas.json").read_text(encoding="utf-8"))
 
@@ -28,11 +27,29 @@ def test_servidor_e_respostas_das_ferramentas() -> None:
     identificador = _executar("rnds_identificador", {"tipo": "cns", "valor": "712345678901236"})
     assert identificador["valido"] is True
     assert _executar("rnds_codigos", {})[0]["tipo"] == "CodeSystem"
-    url = "https://rnds-fhir.saude.gov.br/CodeSystem/BRNacionalidade"
-    esperado = next(item for item in conceitos(url) if item.codigo == "B")
-    resultado = _executar("rnds_codigos", {"sistema": url, "codigo": "B"})
+    url = "https://rnds-fhir.saude.gov.br/ValueSet/BRResultadoQualitativoExame-2.0"
+    origem_a = "https://rnds-fhir.saude.gov.br/CodeSystem/BRResultadoQualitativoExame"
+    origem_b = "https://rnds-fhir.saude.gov.br/CodeSystem/BRTipoResultadoAVIDEZ"
+    resultado = _executar("rnds_codigos", {"sistema": url, "codigo": "1"})
     assert resultado["valido"] is True
-    assert resultado["display"] == esperado.display
+    pares = {(item["sistema"], item["display"]) for item in resultado["conceitos"]}
+    assert (origem_a, "Detectável") in pares
+    assert (origem_b, "Baixa Avidez") in pares
+    filtrado = _executar(
+        "rnds_codigos",
+        {"sistema": url, "codigo": "1", "origem": origem_b},
+    )
+    assert filtrado == {
+        "valido": True,
+        "conceitos": [
+            {"sistema": origem_b, "codigo": "1", "display": "Baixa Avidez"},
+        ],
+    }
+    invalido = _executar(
+        "rnds_codigos",
+        {"sistema": url, "codigo": "1", "origem": "urn:synthetic"},
+    )
+    assert invalido == {"valido": False, "conceitos": []}
 
 
 def test_erro_mcp_para_valores_vazios_e_sistemas_desconhecidos() -> None:
@@ -52,12 +69,20 @@ def test_erro_mcp_para_argumentos_ausentes_ou_nao_textuais() -> None:
         ("rnds_identificador", {"tipo": "cpf", "valor": 1}, "valor"),
         ("rnds_codigos", {"sistema": 1}, "sistema"),
         ("rnds_codigos", {"sistema": "urn:synthetic", "codigo": 1}, "codigo"),
+        ("rnds_codigos", {"sistema": "urn:synthetic", "origem": 1}, "origem"),
+        ("rnds_codigos", {"origem": "urn:synthetic"}, "sistema"),
     )
     for nome, argumentos, campo in casos:
         resposta = _resultado_tool(nome, argumentos)
         assert resposta.model_dump(by_alias=True)["isError"]
         assert campo in resposta.content[0].text
         assert "KeyError" not in resposta.content[0].text
+    sem_codigo = _resultado_tool(
+        "rnds_codigos",
+        {"sistema": "urn:synthetic", "origem": "urn:source"},
+    )
+    assert sem_codigo.model_dump(by_alias=True)["isError"]
+    assert "código" in sem_codigo.content[0].text
 
 
 def test_servidor_stdio_com_cliente_mcp() -> None:

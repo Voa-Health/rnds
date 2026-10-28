@@ -27,7 +27,7 @@ cnes.valido("1234567")
 Liste CodeSystems e ValueSets ou consulte conceitos offline:
 
 ```python
-from rnds.codigos import conceitos, sistemas, valido
+from rnds.codigos import busca, conceitos, sistemas, valido
 
 for sistema in sistemas():
     print(sistema.nome, sistema.total)
@@ -35,6 +35,11 @@ for sistema in sistemas():
 url = "https://rnds-fhir.saude.gov.br/CodeSystem/BRNacionalidade"
 print(conceitos(url))
 print(valido(url, "B"))
+
+url = "https://rnds-fhir.saude.gov.br/ValueSet/BRResultadoQualitativoExame-2.0"
+origem = "https://rnds-fhir.saude.gov.br/CodeSystem/BRTipoResultadoAVIDEZ"
+print(busca(url, "1"))
+print(valido(url, "1", origem=origem))
 ```
 
 Converta um identificador local para o sistema oficial sem alterar seu valor:

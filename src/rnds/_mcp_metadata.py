@@ -23,6 +23,7 @@ FERRAMENTAS: tuple[dict[str, Any], ...] = (
             "properties": {
                 "sistema": {"type": "string"},
                 "codigo": {"type": "string"},
+                "origem": {"type": "string"},
             },
         },
     },
