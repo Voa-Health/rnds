@@ -25,6 +25,21 @@ certificado de cliente, sem cabeçalho `Authorization`. Consultas usam
 As consultas FHIR usam `/fhir/r4/`. Diagnósticos podem conter `EHR-ERR881`,
 `EHR-ERR866`, `EHR-ERR882`, `EHR-ERR906` e `EHR-ERR924`.
 
+### Envio e contexto de atendimento
+
+- Coleção Postman referenciada pelo guia: https://raw.githubusercontent.com/kyriosdata/rnds/master/tools/postman/rnds-postman-collection.json
+- Documentação da coleção: https://documenter.getpostman.com/view/215332/TVewY47S
+- Serviços e métodos: https://rnds-guia.saude.gov.br/docs/rnds/servicos
+
+Fatos adotados: envio por POST `/api/fhir/r4/Bundle`, sucesso 201 com
+identificador documental em `Location`. A substituição usa o mesmo endereço e um
+novo Bundle com `Composition.relatesTo`, `code` igual a `replaces` e
+`targetReference.reference` igual a `Composition/<identificador anterior>`.
+O serviço descrito como obtenção de autorização para contexto de atendimento usa
+POST `/api/contexto-atendimento`, fora do caminho FHIR, com campos `cnes`,
+`cnsProfissional` e `cnsPaciente` no objeto JSON. Os cabeçalhos de segurança
+são os mesmos das consultas. Nenhum exemplo da coleção é reproduzido.
+
 ## Guia de Implementação RNDS 1.0.0
 
 - Fonte: pacote público do Guia de Implementação da RNDS.
