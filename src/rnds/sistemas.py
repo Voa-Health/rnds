@@ -20,6 +20,16 @@ _SISTEMAS = {
 _SISTEMAS_REVERSOS = {oficial: local for local, oficial in _SISTEMAS.items()}
 
 
+def identificador_documento(solicitante: str, valor: str) -> dict[str, str]:
+    """Monte o identificador documental com o solicitante do credenciamento."""
+    if not solicitante.strip() or not valor.strip():
+        raise ValueError("Solicitante e valor devem ser preenchidos.")
+    return {
+        "system": f"http://www.saude.gov.br/fhir/r4/NamingSystem/BRRNDS-{solicitante}",
+        "value": valor,
+    }
+
+
 def para_oficial(identificador: Mapping[str, Any]) -> dict[str, Any]:
     """Copie o identificador e substitua um sistema local pelo oficial."""
     resultado = dict(identificador)

@@ -24,7 +24,7 @@ _TERMOS = re.compile(
     r"charcot|voa-backend|api\.voa\.health|"
     r"\bPRD\b|\bUS\d+\b|\bD[0-9]{1,2}\b|"
     r"(?<!SSE-)(?<!AWS::)\bS[1-7][bc]?\b(?![.:/])(?!\s+cp\b)|"
-    r"(?<!official-)\bPR\b|\bissue\b|pull request|"
+    r"""(?<!official-)\bPR\b|(?<!["'])\bissue\b(?!["'])|pull request|"""
     r"\bsess[aã]o(?:\s+S[1-7])?\b|legad|legacy|portad[oa] de|migrad|"
     r"nesta vers[aã]o|uso futuro|por enquanto|\bTODO\b|FIXME|"
     r"(?<!release/)(?<!/)\bv1\b(?!\.\d)|antes/agora|"

@@ -1,5 +1,30 @@
 # Fontes de dados
 
+## Guia de integração RNDS
+
+- Ambientes: https://rnds-guia.saude.gov.br/docs/rnds/ambientes
+- Serviços: https://rnds-guia.saude.gov.br/docs/rnds/servicos
+- Consultas: https://rnds-guia.saude.gov.br/docs/publico-alvo/ti/conhecer
+- Erros: https://rnds-guia.saude.gov.br/docs/publico-alvo/ti/erros
+- Autenticação: https://rnds-guia.saude.gov.br/docs/publico-alvo/ti/autenticacao
+- Identificador: https://rnds-guia.saude.gov.br/docs/publico-alvo/gestor/identificador
+
+São registrados apenas fatos técnicos, sem reprodução dos exemplos das fontes.
+O guia de integração prevalece sobre o manual SOA-RNDS de 2020.
+
+| Tema | Manual SOA-RNDS 2020 | Guia de integração adotado |
+| --- | --- | --- |
+| Bases de produção | Referência anterior | Auth único `ehr-auth.saude.gov.br`; EHR por UF |
+| Bases de homologação | Referência anterior | `ehr-auth-hmg.saude.gov.br`; `ehr-services.hmg.saude.gov.br` |
+| Validade da autorização | Unidade não usada pelo cliente | `expires_in=1800000`, milissegundos |
+| Identificador documental | Não inferir do estabelecimento | `BRRNDS-<solicitante>` do credenciamento |
+
+Todas as bases usam HTTPS e caminho `/api`. Autenticação: GET `/token` com
+certificado de cliente, sem cabeçalho `Authorization`. Consultas usam
+`X-Authorization-Server: Bearer <valor>` e `Authorization: <CNS requisitante>`.
+As consultas FHIR usam `/fhir/r4/`. Diagnósticos podem conter `EHR-ERR881`,
+`EHR-ERR866`, `EHR-ERR882`, `EHR-ERR906` e `EHR-ERR924`.
+
 ## Guia de Implementação RNDS 1.0.0
 
 - Fonte: pacote público do Guia de Implementação da RNDS.
