@@ -21,11 +21,11 @@ from rnds._mcp_metadata import FERRAMENTAS
 from rnds.cliente import (
     ClienteEhr,
     ErroDeConexao,
+    ErroRnds,
     NaoAutenticado,
     NaoEncontrado,
     RedirecionamentoRecusado,
     RequisicaoRecusada,
-    ResultadoIncerto,
     SemPermissao,
     Token,
     ambientes,
@@ -139,8 +139,27 @@ def test_autorizacao_e_validade() -> None:
             < obtido.expira_em
             <= (datetime.now(timezone.utc) + timedelta(minutes=30))
         )
-    for corpo in ({}, {"access_token": _VALOR, "token_type": "jwt", "expires_in": True}):
-        with pytest.raises(ResultadoIncerto):
+    for tipo in ({}, {"token_type": "Bearer"}):
+        obtido = obter_token(
+            ssl.create_default_context(),
+            "homologacao",
+            transport=httpx.MockTransport(
+                lambda _, tipo=tipo: httpx.Response(
+                    200, json={"access_token": _VALOR, "expires_in": 1800000, **tipo}
+                )
+            ),
+        )
+        assert isinstance(obtido, Token) and obtido.valor == _VALOR
+    for corpo in (
+        {},
+        {"access_token": "", "expires_in": 1},
+        {"access_token": 123, "expires_in": 1},
+        *(
+            {"access_token": _VALOR, "expires_in": valor}
+            for valor in (True, 0, -1, "1800000", 1.5, 10**100)
+        ),
+    ):
+        with pytest.raises(ErroRnds) as erro:
             obter_token(
                 ssl.create_default_context(),
                 "homologacao",
@@ -148,6 +167,7 @@ def test_autorizacao_e_validade() -> None:
                     lambda _, corpo=corpo: httpx.Response(200, json=corpo)
                 ),
             )
+        assert type(erro.value) is ErroRnds
     with pytest.raises(ValueError):
         obter_token(ssl.create_default_context(), "x")
 
@@ -162,7 +182,8 @@ def test_erros_redirecionamento_e_logs(caplog) -> None:
         (422, "924", "invalid", RequisicaoRecusada),
         (404, None, "not-found", NaoEncontrado),
         (400, None, "invalid", RequisicaoRecusada),
-        (500, None, "exception", ResultadoIncerto),
+        (500, None, "exception", ErroRnds),
+        (503, None, "security", ErroRnds),
         (302, None, "invalid", RedirecionamentoRecusado),
     ]
     for status, codigo, tipo, classe in casos:
@@ -191,6 +212,7 @@ def test_erros_redirecionamento_e_logs(caplog) -> None:
         ):
             cli.paciente(cpf=_CPF)
         assert len(chamadas) == 1
+        assert type(erro.value) is classe
         assert erro.value.status == status
         assert erro.value.codigo == (f"EHR-ERR{codigo}" if codigo else None)
         assert erro.value.issues == achados
@@ -200,8 +222,10 @@ def test_erros_redirecionamento_e_logs(caplog) -> None:
     for status, corpo, classe in (
         (401, b"", NaoAutenticado),
         (422, b"html", RequisicaoRecusada),
-        (200, b"", ResultadoIncerto),
-        (200, b"[]", ResultadoIncerto),
+        (200, b"", ErroRnds),
+        (200, b"html", ErroRnds),
+        (200, b"[]", ErroRnds),
+        (503, b"", ErroRnds),
     ):
         with (
             ClienteEhr(
@@ -212,14 +236,27 @@ def test_erros_redirecionamento_e_logs(caplog) -> None:
                     lambda _, status=status, corpo=corpo: httpx.Response(status, content=corpo)
                 ),
             ) as cli,
-            pytest.raises(classe),
+            pytest.raises(classe) as erro,
         ):
             cli.capacidades()
+        assert type(erro.value) is classe
+        assert erro.value.status == status
+        with pytest.raises(classe) as erro:
+            obter_token(
+                ssl.create_default_context(),
+                "homologacao",
+                transport=httpx.MockTransport(
+                    lambda _, status=status, corpo=corpo: httpx.Response(status, content=corpo)
+                ),
+            )
+        assert type(erro.value) is classe
+        assert erro.value.status == status
     for excecao, classe in (
         (httpx.ConnectTimeout, ErroDeConexao),
         (httpx.ConnectError, ErroDeConexao),
-        (httpx.ReadTimeout, ResultadoIncerto),
-        (httpx.WriteError, ResultadoIncerto),
+        (httpx.ReadTimeout, ErroDeConexao),
+        (httpx.WriteError, ErroDeConexao),
+        (httpx.ReadError, ErroDeConexao),
     ):
         chamadas = []
 
@@ -234,6 +271,13 @@ def test_erros_redirecionamento_e_logs(caplog) -> None:
             cli.capacidades()
         assert len(chamadas) == 1
         assert all(valor not in str(erro.value) for valor in (_VALOR, _CNS, _CPF))
+        with pytest.raises(ErroDeConexao):
+            obter_token(
+                ssl.create_default_context(),
+                "homologacao",
+                transport=httpx.MockTransport(falhar),
+            )
+        assert len(chamadas) == 2
 
 
 def test_mtls_temporario_removido(monkeypatch) -> None:

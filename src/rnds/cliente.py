@@ -72,11 +72,11 @@ class ErroRnds(Exception):
 
 
 class ErroDeConexao(ErroRnds):
-    """Conexão não estabelecida."""
+    """Falha de transporte; repetir é seguro."""
 
 
 class ResultadoIncerto(ErroRnds):
-    """Resposta não confirmada ou transporte interrompido após conexão."""
+    """Envio pode ter sido processado; não repita sem reconciliação."""
 
 
 class RedirecionamentoRecusado(ErroRnds):
@@ -140,10 +140,8 @@ def _get(http: httpx.Client, url: str, op: str, **kwargs: Any) -> dict[str, Any]
     try:
         try:
             resposta = http.get(url, **kwargs)
-        except (httpx.ConnectError, httpx.ConnectTimeout):
-            raise ErroDeConexao("Conexão não estabelecida.") from None
         except httpx.TransportError:
-            raise ResultadoIncerto("Resposta não confirmada; sem repetição automática.") from None
+            raise ErroDeConexao("Falha de transporte; repetir é seguro.") from None
         status = resposta.status_code
         try:
             dados = resposta.json()
@@ -154,6 +152,8 @@ def _get(http: httpx.Client, url: str, op: str, **kwargs: Any) -> dict[str, Any]
         erro: type[ErroRnds] | None = None
         if 300 <= status < 400:
             erro = RedirecionamentoRecusado
+        elif 500 <= status < 600:
+            erro = ErroRnds
         elif status == 401:
             erro = NaoAutenticado
         elif status == 403 or any(
@@ -165,7 +165,7 @@ def _get(http: httpx.Client, url: str, op: str, **kwargs: Any) -> dict[str, Any]
         elif 400 <= status < 500:
             erro = RequisicaoRecusada
         elif not 200 <= status < 300 or not isinstance(dados, dict):
-            erro = ResultadoIncerto
+            erro = ErroRnds
         if erro:
             raise erro("Operação RNDS não concluída.", status=status, issues=achados)
         return dict(dados)
@@ -192,15 +192,14 @@ def obter_token(
     if (
         not isinstance(dados.get("access_token"), str)
         or not dados["access_token"]
-        or dados.get("token_type") != "jwt"
         or type(dados.get("expires_in")) is not int
         or dados["expires_in"] <= 0
     ):
-        raise ResultadoIncerto("Resposta de autenticação inválida.")
+        raise ErroRnds("Resposta de autenticação inválida.")
     try:
         return Token(dados["access_token"], inicio + timedelta(milliseconds=dados["expires_in"]))
     except OverflowError:
-        raise ResultadoIncerto("Validade da autorização inválida.") from None
+        raise ErroRnds("Validade da autorização inválida.") from None
 
 
 def _identificador(tipo: str, valor: str | None) -> str:
