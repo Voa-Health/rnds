@@ -9,6 +9,7 @@ from collections.abc import Callable
 from typing import Any, NoReturn
 
 from . import __version__, cnes, cns, cpf
+from ._ambientes import ambientes
 from ._consulta import (
     conceitos_json,
     identificador_payload,
@@ -61,6 +62,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     validar = comandos.add_parser("validate", help="validar um Bundle FHIR offline")
     validar.add_argument("arquivo")
     comandos.add_parser("mcp", help="iniciar o servidor MCP local em stdio")
+    comandos.add_parser("ambientes", help="listar os endereços RNDS offline")
     return parser.parse_args(argv)
 
 
@@ -121,6 +123,9 @@ def main(argv: list[str] | None = None) -> int:
     except SystemExit as erro:
         return erro.code if isinstance(erro.code, int) else 0
     try:
+        if args.comando == "ambientes":
+            _emitir(ambientes())
+            return 0
         if args.comando in _TIPOS:
             payload = identificador_payload(args.comando, args.valor)
             _emitir(payload)
