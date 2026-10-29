@@ -1,16 +1,19 @@
-"""Autenticação mTLS e consultas RNDS explícitas, sem repetição automática."""
+"""Autenticação mTLS e operações RNDS explícitas, sem repetição automática."""
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import re
 import ssl
 import tempfile
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from time import perf_counter
 from typing import Any, Literal
+from urllib.parse import urlsplit
 
 try:
     import httpx
@@ -23,12 +26,15 @@ try:
 except ImportError:
     raise ImportError('Instale o extra: pip install "rnds[cliente]"') from None
 
-from . import cnes, cns, cpf, sistemas
+from . import cnes, cns, cpf, sistemas, validacao
 from ._ambientes import Endereco, ambientes, endereco
+from .validacao import Achado
 
 __all__ = [
+    "BundleInvalido",
     "ClienteEhr",
     "Endereco",
+    "Envio",
     "ErroDeConexao",
     "ErroRnds",
     "NaoAutenticado",
@@ -77,6 +83,23 @@ class ErroDeConexao(ErroRnds):
 
 class ResultadoIncerto(ErroRnds):
     """Envio pode ter sido processado; não repita sem reconciliação."""
+
+
+class BundleInvalido(ErroRnds):
+    """Bundle recusado localmente, sem envio."""
+
+    def __init__(self, achados: tuple[Achado, ...]) -> None:
+        super().__init__("Bundle inválido.")
+        self.achados = achados
+
+
+@dataclass(frozen=True)
+class Envio:
+    """Resultado do envio aceito pelo serviço."""
+
+    id_rnds: str
+    location: str
+    avisos: tuple[Achado, ...]
 
 
 class RedirecionamentoRecusado(ErroRnds):
@@ -134,14 +157,25 @@ def contexto_mtls(pfx: bytes, senha: bytes) -> ssl.SSLContext:
         raise ValueError("Não foi possível carregar o certificado mTLS.") from None
 
 
-def _get(http: httpx.Client, url: str, op: str, **kwargs: Any) -> dict[str, Any]:
+def _requisicao(
+    http: httpx.Client,
+    url: str,
+    op: str,
+    *,
+    idempotente: bool = True,
+    metodo: str = "GET",
+    **kwargs: Any,
+) -> httpx.Response:
     inicio = perf_counter()
     status = None
     try:
         try:
-            resposta = http.get(url, **kwargs)
+            resposta = http.request(metodo, url, **kwargs)
+        except (httpx.ConnectError, httpx.ConnectTimeout):
+            raise ErroDeConexao("Falha de conexão; repetir é seguro.") from None
         except httpx.TransportError:
-            raise ErroDeConexao("Falha de transporte; repetir é seguro.") from None
+            erro_transporte = ErroDeConexao if idempotente else ResultadoIncerto
+            raise erro_transporte("Falha de transporte na operação RNDS.") from None
         status = resposta.status_code
         try:
             dados = resposta.json()
@@ -153,7 +187,7 @@ def _get(http: httpx.Client, url: str, op: str, **kwargs: Any) -> dict[str, Any]
         if 300 <= status < 400:
             erro = RedirecionamentoRecusado
         elif 500 <= status < 600:
-            erro = ErroRnds
+            erro = ErroRnds if idempotente else ResultadoIncerto
         elif status == 401:
             erro = NaoAutenticado
         elif status == 403 or any(
@@ -164,13 +198,24 @@ def _get(http: httpx.Client, url: str, op: str, **kwargs: Any) -> dict[str, Any]
             erro = NaoEncontrado
         elif 400 <= status < 500:
             erro = RequisicaoRecusada
-        elif not 200 <= status < 300 or not isinstance(dados, dict):
+        elif not 200 <= status < 300:
             erro = ErroRnds
         if erro:
             raise erro("Operação RNDS não concluída.", status=status, issues=achados)
-        return dict(dados)
+        return resposta
     finally:
         _LOG.info("op=%s status=%s duracao_ms=%.3f", op, status, (perf_counter() - inicio) * 1000)
+
+
+def _get(http: httpx.Client, url: str, op: str, **kwargs: Any) -> dict[str, Any]:
+    resposta = _requisicao(http, url, op, **kwargs)
+    try:
+        dados = resposta.json()
+    except ValueError:
+        dados = None
+    if not isinstance(dados, dict):
+        raise ErroRnds("Resposta RNDS inválida.", status=resposta.status_code)
+    return dict(dados)
 
 
 def obter_token(
@@ -219,7 +264,7 @@ def _pessoa(cpf_valor: str | None, cns_valor: str | None) -> tuple[str, str]:
 
 
 class ClienteEhr:
-    """Consultas explícitas com validação local e ciclo de vida controlado."""
+    """Operações explícitas com validação local e ciclo de vida controlado."""
 
     def __init__(
         self,
@@ -232,7 +277,9 @@ class ClienteEhr:
         timeout: float = 30.0,
     ) -> None:
         requisitante = _identificador("cns", cns_requisitante)
-        self._base = endereco(ambiente, uf).ehr + "/fhir/r4/"
+        self._ehr = endereco(ambiente, uf).ehr
+        self._requisitante = requisitante
+        self._base = self._ehr + "/fhir/r4/"
         self._http = httpx.Client(
             timeout=timeout,
             transport=transport,
@@ -298,3 +345,41 @@ class ClienteEhr:
     def capacidades(self) -> dict[str, Any]:
         """Consulte os metadados completos do serviço."""
         return _get(self._http, self._base + "metadata", "capacidades", params={"mode": "full"})
+
+    def enviar(self, bundle: Mapping[str, Any], *, validar: bool = True) -> Envio:
+        """Envie um Bundle uma única vez, validando-o localmente por padrão."""
+        achados = tuple(validacao.validar(bundle)) if validar else ()
+        if any(achado.severity == "error" for achado in achados):
+            raise BundleInvalido(achados)
+        resposta = _requisicao(
+            self._http,
+            self._base + "Bundle",
+            "enviar",
+            metodo="POST",
+            idempotente=False,
+            content=json.dumps(dict(bundle), separators=(",", ":")),
+            headers={"Content-Type": "application/json"},
+        )
+        location = resposta.headers.get("Location", "")
+        try:
+            caminho = urlsplit(location.strip()).path.split("/_history/", 1)[0].rstrip("/")
+        except ValueError:
+            raise ResultadoIncerto("Confirmação de envio inválida.", status=201) from None
+        id_rnds = caminho.rsplit("/", 1)[-1]
+        if resposta.status_code != 201 or not id_rnds:
+            raise ResultadoIncerto("Confirmação de envio incompleta.", status=resposta.status_code)
+        return Envio(id_rnds, location, tuple(a for a in achados if a.severity == "warning"))
+
+    def contexto_atendimento(self, *, cnes: str, cns_paciente: str) -> dict[str, Any]:
+        """Obtenha o contexto de atendimento sem remodelar a resposta."""
+        return _get(
+            self._http,
+            self._ehr + "/contexto-atendimento",
+            "contexto_atendimento",
+            metodo="POST",
+            json={
+                "cnes": _identificador("cnes", cnes),
+                "cnsProfissional": self._requisitante,
+                "cnsPaciente": _identificador("cns", cns_paciente),
+            },
+        )

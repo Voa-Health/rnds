@@ -3,7 +3,7 @@
   "name": "health.voa/rnds",
   "title": "rnds",
   "description": "Identificadores, códigos e validação offline de Bundles RNDS.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "websiteUrl": "https://github.com/Voa-Health/rnds",
   "repository": {
     "url": "https://github.com/Voa-Health/rnds",
@@ -14,7 +14,7 @@
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "rnds",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
@@ -23,7 +23,7 @@
         {
           "type": "named",
           "name": "--with",
-          "value": "rnds[mcp]==0.1.0",
+          "value": "rnds[mcp]==0.2.0",
           "description": "Instala o extra MCP na mesma versão."
         }
       ],

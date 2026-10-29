@@ -3,6 +3,6 @@
 from .codigos import Conceito, Sistema, conceitos, valido
 from .validacao import Achado, validar
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = ["Achado", "Conceito", "Sistema", "__version__", "conceitos", "validar", "valido"]

@@ -2,6 +2,8 @@
 
 ## Não lançado
 
+- Envio de Bundles com validação local, avisos e resultado incerto sem repetição.
+- Contexto de atendimento e orientação para substituição documental.
 - Cliente opcional para autenticação mTLS e consultas FHIR, sem repetição automática.
 - Endereços RNDS versionados e comando offline `rnds ambientes`.
 - Identificador documental com o solicitante do credenciamento.

@@ -19,6 +19,7 @@ from rnds import cnes, cns, cpf, sistemas
 from rnds.__main__ import main
 from rnds._mcp_metadata import FERRAMENTAS
 from rnds.cliente import (
+    BundleInvalido,
     ClienteEhr,
     ErroDeConexao,
     ErroRnds,
@@ -26,6 +27,7 @@ from rnds.cliente import (
     NaoEncontrado,
     RedirecionamentoRecusado,
     RequisicaoRecusada,
+    ResultadoIncerto,
     SemPermissao,
     Token,
     ambientes,
@@ -278,6 +280,128 @@ def test_erros_redirecionamento_e_logs(caplog) -> None:
                 transport=httpx.MockTransport(falhar),
             )
         assert len(chamadas) == 2
+
+    bundle = {"resourceType": "Bundle", "type": "collection", "entry": []}
+    original = json.dumps(bundle)
+    vistos = []
+    resposta = httpx.Response(201, headers={"Location": "/Composition/documento-sintetico"})
+
+    def responder_envio(req):
+        vistos.append(req)
+        assert req.method == "POST"
+        assert req.headers["Authorization"] == _CNS
+        assert req.headers["X-Authorization-Server"] == f"Bearer {_VALOR}"
+        assert req.headers["Content-Type"] == "application/json"
+        return resposta
+
+    with ClienteEhr(
+        _TOKEN, _CNS, "homologacao", transport=httpx.MockTransport(responder_envio)
+    ) as cli:
+        for location in (
+            "/Composition/documento-sintetico",
+            "https://example.invalid/Composition/documento-sintetico/_history/2",
+        ):
+            resposta = httpx.Response(201, headers={"Location": location})
+            envio = cli.enviar(bundle)
+            assert envio.id_rnds == "documento-sintetico"
+            assert envio.location == location
+            assert envio.avisos == ()
+            assert vistos[-1].url.path == "/api/fhir/r4/Bundle"
+            assert vistos[-1].content.decode() == json.dumps(bundle, separators=(",", ":"))
+        assert json.dumps(bundle) == original
+        antes = len(vistos)
+        with pytest.raises(BundleInvalido) as invalido:
+            cli.enviar({})
+        assert any(a.severity == "error" for a in invalido.value.achados)
+        assert len(vistos) == antes
+        cli.enviar({}, validar=False)
+        assert json.loads(vistos[-1].content) == {}
+        aviso = {
+            **bundle,
+            "identifier": {"system": sistemas.LOCAL_CNS, "value": _CNS},
+        }
+        assert all(a.severity == "warning" for a in cli.enviar(aviso).avisos)
+        assert cli.enviar(aviso).avisos
+        assert json.loads(vistos[-1].content) == aviso
+        for location in (None, "", " "):
+            resposta = httpx.Response(
+                201, headers={} if location is None else {"Location": location}
+            )
+            with pytest.raises(ResultadoIncerto):
+                cli.enviar(bundle)
+        for status, esperado in (
+            (503, ResultadoIncerto),
+            (302, RedirecionamentoRecusado),
+            (401, NaoAutenticado),
+            (403, SemPermissao),
+            (404, NaoEncontrado),
+            (422, RequisicaoRecusada),
+        ):
+            resposta = httpx.Response(
+                status,
+                headers={"Location": "https://example.invalid/nao-seguir"},
+                json={"resourceType": "OperationOutcome", "issue": [{"diagnostics": "EHR-ERR866"}]},
+            )
+            antes = len(vistos)
+            with pytest.raises(esperado) as falha_envio:
+                cli.enviar(bundle)
+            assert falha_envio.value.codigo == "EHR-ERR866"
+            assert falha_envio.value.issues == [{"diagnostics": "EHR-ERR866"}]
+            assert len(vistos) == antes + 1
+        resposta = httpx.Response(200, json={"access_token": "contexto-sintetico"})
+        assert cli.contexto_atendimento(cnes=_CNES, cns_paciente=_CNS) == {
+            "access_token": "contexto-sintetico"
+        }
+        assert vistos[-1].url.path == "/api/contexto-atendimento"
+        assert json.loads(vistos[-1].content) == {
+            "cnes": _CNES,
+            "cnsProfissional": _CNS,
+            "cnsPaciente": _CNS,
+        }
+        antes = len(vistos)
+        for args in ({"cnes": "x", "cns_paciente": _CNS}, {"cnes": _CNES, "cns_paciente": "x"}):
+            with pytest.raises(ValueError, match="Identificador inválido"):
+                cli.contexto_atendimento(**args)
+        assert len(vistos) == antes
+        for dados in ([], None, "texto"):
+            resposta = httpx.Response(200, json=dados)
+            with pytest.raises(ErroRnds):
+                cli.contexto_atendimento(cnes=_CNES, cns_paciente=_CNS)
+    for tipo in (
+        httpx.ReadTimeout,
+        httpx.WriteTimeout,
+        httpx.ReadError,
+        httpx.ConnectError,
+        httpx.ConnectTimeout,
+    ):
+        chamadas = []
+
+        def interromper(req, chamadas=chamadas, tipo=tipo):
+            chamadas.append(req)
+            raise tipo("conteudo-sigiloso")
+
+        with ClienteEhr(
+            _TOKEN, _CNS, "homologacao", transport=httpx.MockTransport(interromper)
+        ) as cli:
+            esperado = (
+                ErroDeConexao
+                if tipo in (httpx.ConnectError, httpx.ConnectTimeout)
+                else ResultadoIncerto
+            )
+            with pytest.raises(esperado):
+                cli.enviar(bundle)
+            assert len(chamadas) == 1
+            with pytest.raises(ErroDeConexao):
+                cli.contexto_atendimento(cnes=_CNES, cns_paciente=_CNS)
+    for sigiloso in (
+        _CNS,
+        _VALOR,
+        "contexto-sintetico",
+        "documento-sintetico",
+        "conteudo-sigiloso",
+        "resourceType",
+    ):
+        assert sigiloso not in caplog.text
 
 
 def test_mtls_temporario_removido(monkeypatch) -> None:
