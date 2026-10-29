@@ -1,5 +1,11 @@
 # Registro de alterações
 
+## Não lançado
+
+- Cliente opcional para autenticação mTLS e consultas FHIR, sem repetição automática.
+- Endereços RNDS versionados e comando offline `rnds ambientes`.
+- Identificador documental com o solicitante do credenciamento.
+
 ## 0.1.0
 
 - Biblioteca offline para normalizar e validar CPF, CNS e CNES.

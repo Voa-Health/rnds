@@ -71,7 +71,7 @@ jobs:
       - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       - run: uv sync --locked --all-extras --group dev
       - run: uv build
-      - run: uv run python -c "import zipfile,glob; z=zipfile.ZipFile(glob.glob('dist/*.whl')[0]); assert any(n.endswith('_data/codigos.json') for n in z.namelist()); assert any(n.endswith('py.typed') for n in z.namelist())"
+      - run: uv run python -c "import zipfile,glob; z=zipfile.ZipFile(glob.glob('dist/*.whl')[0]); assert any(n.endswith('_data/codigos.json') for n in z.namelist()); assert any(n.endswith('_data/ambientes.json') for n in z.namelist()); assert any(n.endswith('py.typed') for n in z.namelist())"
       - run: python -m venv /tmp/rnds-base
       - run: wheel=$(printf '%s\n' dist/*.whl) && /tmp/rnds-base/bin/pip install "$wheel"
       - run: /tmp/rnds-base/bin/rnds cns 712345678901236

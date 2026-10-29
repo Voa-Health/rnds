@@ -1,0 +1,38 @@
+{
+  "homologacao": {
+    "auth": "https://ehr-auth-hmg.saude.gov.br/api",
+    "ehr": "https://ehr-services.hmg.saude.gov.br/api"
+  },
+  "producao": {
+    "auth": "https://ehr-auth.saude.gov.br/api"
+  },
+  "ufs": {
+    "ac": "https://ac-ehr-services.saude.gov.br/api",
+    "al": "https://al-ehr-services.saude.gov.br/api",
+    "ap": "https://ap-ehr-services.saude.gov.br/api",
+    "am": "https://am-ehr-services.saude.gov.br/api",
+    "ba": "https://ba-ehr-services.saude.gov.br/api",
+    "ce": "https://ce-ehr-services.saude.gov.br/api",
+    "df": "https://df-ehr-services.saude.gov.br/api",
+    "es": "https://es-ehr-services.saude.gov.br/api",
+    "go": "https://go-ehr-services.saude.gov.br/api",
+    "ma": "https://ma-ehr-services.saude.gov.br/api",
+    "mt": "https://mt-ehr-services.saude.gov.br/api",
+    "ms": "https://ms-ehr-services.saude.gov.br/api",
+    "mg": "https://mg-ehr-services.saude.gov.br/api",
+    "pa": "https://pa-ehr-services.saude.gov.br/api",
+    "pb": "https://pb-ehr-services.saude.gov.br/api",
+    "pr": "https://pr-ehr-services.saude.gov.br/api",
+    "pe": "https://pe-ehr-services.saude.gov.br/api",
+    "pi": "https://pi-ehr-services.saude.gov.br/api",
+    "rj": "https://rj-ehr-services.saude.gov.br/api",
+    "rn": "https://rn-ehr-services.saude.gov.br/api",
+    "rs": "https://rs-ehr-services.saude.gov.br/api",
+    "ro": "https://ro-ehr-services.saude.gov.br/api",
+    "rr": "https://rr-ehr-services.saude.gov.br/api",
+    "sc": "https://sc-ehr-services.saude.gov.br/api",
+    "sp": "https://sp-ehr-services.saude.gov.br/api",
+    "se": "https://se-ehr-services.saude.gov.br/api",
+    "to": "https://to-ehr-services.saude.gov.br/api"
+  }
+}

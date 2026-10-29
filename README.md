@@ -1,8 +1,8 @@
 # RNDS para Python
 
-Identificadores brasileiros e códigos da RNDS em uma biblioteca Python, CLI e servidor MCP. Tudo funciona localmente, sem chamadas de rede.
+Identificadores brasileiros e códigos da RNDS em uma biblioteca Python, CLI e servidor MCP. As ferramentas offline funcionam sem chamadas de rede.
 
-Projeto de código aberto da Voa Health, **não afiliado ao Ministério da Saúde nem ao DATASUS**. Este pacote não se conecta à RNDS, não autentica e não envia recursos.
+Projeto de código aberto da Voa Health, **não afiliado ao Ministério da Saúde nem ao DATASUS**. O extra opcional `pip install "rnds[cliente]"` permite autenticação mTLS e consultas à RNDS via `rnds.cliente`; não envia recursos. O MCP permanece offline.
 
 ## Início rápido
 
@@ -53,7 +53,7 @@ print(identificador)
 
 Instale `pip install "rnds[mcp]"` para iniciar `rnds mcp` ou `rnds-mcp`. O servidor usa transporte stdio e consulta os mesmos dados locais da biblioteca, incluindo `rnds_validate` para validar Bundles.
 
-Os valores nos exemplos são sintéticos. A biblioteca não acessa serviços hospedados.
+Os valores nos exemplos são sintéticos. Apenas o cliente opcional acessa serviços hospedados.
 
 ## Validar um Bundle
 

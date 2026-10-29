@@ -37,6 +37,24 @@ OUT_FERRAMENTAS = ROOT / "tests" / "ferramentas.json"
 URL_NAMINGSYSTEM = "https://rnds-fhir.saude.gov.br/NamingSystem-{}.json"
 
 
+def _verificar_ambientes() -> bool:
+    """Confira a estrutura e as 27 bases estaduais versionadas."""
+    dados = json.loads((ROOT / "src/rnds/_data/ambientes.json").read_text(encoding="utf-8"))
+    ufs = "ac al ap am ba ce df es go ma mt ms mg pa pb pr pe pi rj rn rs ro rr sc sp se to"
+    esperado = {
+        "homologacao": {
+            "auth": "https://ehr-auth-hmg.saude.gov.br/api",
+            "ehr": "https://ehr-services.hmg.saude.gov.br/api",
+        },
+        "producao": {"auth": "https://ehr-auth.saude.gov.br/api"},
+        "ufs": {uf: f"https://{uf}-ehr-services.saude.gov.br/api" for uf in ufs.split()},
+    }
+    if dados != esperado:
+        logging.error("Endereços RNDS inválidos.")
+        return False
+    return True
+
+
 def _baixar(url: str) -> bytes:
     """Baixe uma fonte pública com limite de tempo."""
     with urllib.request.urlopen(url, timeout=120) as resposta:
@@ -116,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
             ROOT,
             IG_VERSION,
             PACOTE_SHA256,
-            lambda: _artefatos(check=True),
+            lambda: _artefatos(check=True) and _verificar_ambientes(),
         )
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as erro:
         logging.error("%s", erro)
