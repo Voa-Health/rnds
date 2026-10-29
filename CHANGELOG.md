@@ -1,6 +1,6 @@
 # Registro de alterações
 
-## Não lançado
+## 0.2.0
 
 - Envio de Bundles com validação local, avisos e resultado incerto sem repetição.
 - Contexto de atendimento e orientação para substituição documental.
