@@ -147,3 +147,5 @@ relacionamento = {
 Isso corresponde a `Composition.relatesTo` com `code=replaces` e
 `targetReference.reference = "Composition/<id_rnds anterior>"`.
 O cliente não altera o Bundle do chamador.
+
+Um [exemplo laboratorial offline](examples/README.md) mostra arquivo, stdin e erros reproduzíveis de validação com dados sintéticos.
