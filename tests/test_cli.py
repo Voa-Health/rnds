@@ -69,6 +69,29 @@ def test_cli_mcp_sem_extra_explica_instalacao(monkeypatch, capsys) -> None:
 
 def test_cli_validacao_arquivo_stdin_e_erros(tmp_path: Path, monkeypatch, capsys) -> None:
     fixtures = Path(__file__).parent / "fixtures" / "bundles"
+
+    exemplo = Path(__file__).resolve().parents[1] / "examples" / "bundle-laboratorial.json"
+    assert main(["validate", str(exemplo)]) == 0
+    assert json.loads(capsys.readouterr().out) == {"achados": []}
+    for caso, status, codigo in [
+        ("valido", 0, None),
+        ("cpf-invalido", 1, "RNDS-ID-001"),
+        ("referencia-ausente", 1, "RNDS-REF-001"),
+    ]:
+        bundle = json.loads(exemplo.read_text(encoding="utf-8"))
+        if caso == "cpf-invalido":
+            bundle["entry"][0]["resource"]["identifier"][0]["value"] = "00000000000"
+        if caso == "referencia-ausente":
+            bundle["entry"][1]["resource"]["subject"]["reference"] = "Patient/ausente"
+        conteudo = json.dumps(bundle).encode("utf-8")
+        monkeypatch.setattr(cli.sys, "stdin", io.TextIOWrapper(io.BytesIO(conteudo)))
+        assert main(["validate", "-"]) == status
+        achados = json.loads(capsys.readouterr().out)["achados"]
+        if codigo is None:
+            assert achados == []
+        else:
+            assert [item["code"] for item in achados] == [codigo]
+
     assert main(["validate", str(fixtures / "valido.json")]) == 0
     assert json.loads(capsys.readouterr().out) == {"achados": []}
     assert main(["validate", str(fixtures / "rnds-id-001.json")]) == 1

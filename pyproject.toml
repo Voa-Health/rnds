@@ -52,6 +52,7 @@ include = [
   "src/rnds",
   "scripts",
   "tests",
+  "examples",
   "README.md",
   "LICENSE",
   "AGENTS.md",
