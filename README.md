@@ -73,12 +73,12 @@ Instale a CLI com `pip install rnds` ou execute sem instalar com
 | `rnds cnes <valor>` | Normaliza e confere um CNES. |
 | `rnds codigos` | Lista os CodeSystems e ValueSets incluídos. |
 | `rnds codigos <url>` | Lista os conceitos de um sistema. |
-| `rnds codigos <url> <código>` | Confere um código; `--origem URL` restringe o CodeSystem de um ValueSet. |
+| `rnds codigos <url> <código>` | Confere um código pelo código de saída, sem saída JSON; `--origem URL` restringe o CodeSystem de um ValueSet. |
 | `rnds validate <arquivo\|->` | Valida um Bundle de um arquivo ou da entrada padrão. |
 | `rnds ambientes` | Lista os endereços RNDS de homologação e produção. |
 | `rnds mcp` | Inicia o MCP local em stdio; requer `rnds[mcp]`. |
 
-As saídas são JSON. Os códigos de saída são `0` para sucesso, `1` para
+As consultas saem em JSON. Os códigos de saída são `0` para sucesso, `1` para
 identificador ou código inválido e Bundle com erros, e `2` para uso inválido ou
 entrada ilegível.
 
@@ -249,8 +249,8 @@ em `ClienteEhr(..., "producao", uf="sp")`.
 
 | Método | Uso |
 | --- | --- |
-| `paciente(cpf=..., cns=...)` | Consulta um paciente. |
-| `profissional(cns=..., cpf=...)` | Consulta um profissional. |
+| `paciente(cpf=...)` ou `paciente(cns=...)` | Consulta um paciente por exatamente um identificador. |
+| `profissional(cns=...)` ou `profissional(cpf=...)` | Consulta um profissional por exatamente um identificador. |
 | `lotacoes(cns, cnes)` | Consulta as lotações de um profissional no estabelecimento. |
 | `estabelecimento(cnes_ou_cnpj)` | Consulta um estabelecimento. |
 | `capacidades()` | Lê o CapabilityStatement do serviço. |
