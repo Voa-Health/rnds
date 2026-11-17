@@ -2,6 +2,7 @@
 
 ## Não lançado
 
+- Documentação de acesso ao MCP hospedado, cotas compartilhadas e consulta de preços públicos.
 - Pacote ChatGPT por HTTP e OAuth para consultar códigos RNDS sem dados de paciente.
 
 ## 0.2.0
