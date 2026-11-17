@@ -20,7 +20,8 @@ Os argumentos `sistema`, `codigo` e `origem` são strings opcionais:
 - Com `sistema` e `codigo`, consulte o código exato.
 - Com os três argumentos, filtre os conceitos pela URL do CodeSystem de
   `origem`. Origem exige sistema e código; código exige sistema.
-Use somente sistemas retornados pela listagem, nunca URLs fora do catálogo.
+Em `sistema`, use somente URLs retornadas pela listagem. Em `origem`, use a URL
+de CodeSystem de um conceito retornado, mesmo fora da listagem.
 Os códigos são exatos, não texto livre nem conteúdo com aparência de JSON.
 Nunca passe argumentos extras. O servidor rejeita essas entradas.
 Não envie valores nulos em lugar de strings.
