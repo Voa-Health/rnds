@@ -1,5 +1,9 @@
 # Registro de alterações
 
+## Não lançado
+
+- Pacote ChatGPT por HTTP e OAuth para consultar códigos RNDS sem dados de paciente.
+
 ## 0.2.0
 
 - Envio de Bundles com validação local, avisos e resultado incerto sem repetição.

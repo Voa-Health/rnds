@@ -1,0 +1,116 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "rnds",
+  "version": "0.2.0",
+  "description": "Read-only lookup of bundled RNDS CodeSystems, ValueSets and concepts, including code lookup. No patient data, no CPF/CNS/CNES, no Bundle validation and no RNDS submission.",
+  "author": {
+    "name": "Voa Health",
+    "url": "https://voa.health"
+  },
+  "homepage": "https://github.com/Voa-Health/rnds",
+  "repository": "https://github.com/Voa-Health/rnds",
+  "license": "Apache-2.0",
+  "keywords": [
+    "RNDS",
+    "FHIR",
+    "CodeSystem",
+    "ValueSet"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Voa RNDS",
+        "shortDescription": "RNDS codes and concepts",
+        "longDescription": "Read-only lookup of bundled RNDS CodeSystems, ValueSets and concepts, including code lookup. No patient data, no CPF/CNS/CNES, no Bundle validation and no RNDS submission.",
+        "developerName": "Voa Health",
+        "category": "Healthcare",
+        "capabilities": [],
+        "websiteURL": "https://github.com/Voa-Health/rnds",
+        "supportURL": "https://github.com/Voa-Health/rnds/issues",
+        "privacyPolicyURL": "https://app.voa.health/legal/privacidade",
+        "termsOfServiceURL": "https://app.voa.health/legal/termos",
+        "defaultPrompt": [
+          "List the available RNDS coding systems.",
+          "List the concepts in an RNDS ValueSet.",
+          "Look up a code in an RNDS CodeSystem."
+        ],
+        "brandColor": "#8236FF",
+        "brandColorDark": "#A06AFF",
+        "logo": "./assets/voa-icon.png",
+        "logoDark": "./assets/voa-icon-dark.png",
+        "composerIcon": "./assets/voa-icon.png",
+        "composerIconDark": "./assets/voa-icon-dark.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Listar sistemas.",
+              "prompt": "Quais CodeSystems e ValueSets RNDS estão disponíveis?",
+              "tools_triggered": "rnds_codigos",
+              "expected_behavior": "Chama sem argumentos e lista apenas os sistemas retornados em data."
+            },
+            {
+              "description": "Listar conceitos.",
+              "prompt": "Liste os conceitos do CodeSystem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
+              "tools_triggered": "rnds_codigos",
+              "expected_behavior": "Usa somente sistema com a URL do catálogo, sem codigo, e apresenta os conceitos retornados em data."
+            },
+            {
+              "description": "Código válido.",
+              "prompt": "Consulte o código 010105 no CodeSystem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
+              "tools_triggered": "rnds_codigos",
+              "expected_behavior": "Informa somente sistema e codigo exato; apresenta valido, display e conceitos retornados em data sem inventar conteúdo."
+            },
+            {
+              "description": "Código ausente.",
+              "prompt": "Consulte o código 000000 no CodeSystem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
+              "tools_triggered": "rnds_codigos",
+              "expected_behavior": "Informa somente sistema e codigo exato; relata em data valido falso, display nulo e conceitos vazios, sem inventar equivalência."
+            },
+            {
+              "description": "Filtrar origem.",
+              "prompt": "Consulte 010105 em https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO com origem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
+              "tools_triggered": "rnds_codigos",
+              "expected_behavior": "Envia somente sistema, codigo e origem com os valores solicitados e apresenta os conceitos de data filtrados pela origem."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Dados fictícios e identificador.",
+              "prompt": "Paciente fictício Pessoa Exemplo tem dor; valide o CPF fictício exemplo-invalido.",
+              "tools_triggered": "",
+              "expected_behavior": "Recusa o processamento de dados de paciente e identificadores; não reproduz nem envia esses dados. Solicita consulta genérica de códigos."
+            },
+            {
+              "description": "Validação e envio.",
+              "prompt": "Valide um Bundle FHIR fictício e envie para a RNDS.",
+              "tools_triggered": "",
+              "expected_behavior": "Explica que validação de Bundle e envio não são suportados; não chama ferramentas nem solicita o documento."
+            },
+            {
+              "description": "Fora do escopo.",
+              "prompt": "Escreva um roteiro de viagem para uma ilha imaginária.",
+              "tools_triggered": "",
+              "expected_behavior": "Explica o escopo de consulta de códigos RNDS sem chamar ferramentas."
+            }
+          ]
+        }
+      },
+      "publication": {
+        "translations": {
+          "pt-BR": {
+            "displayName": "Voa RNDS",
+            "shortDescription": "Códigos e conceitos RNDS",
+            "longDescription": "Consulta somente leitura de CodeSystems, ValueSets e conceitos RNDS incluídos no pacote, incluindo busca de códigos. Sem dados de paciente, sem CPF/CNS/CNES, sem validação de Bundle e sem envio à RNDS.",
+            "defaultPrompt": [
+              "Liste os sistemas de códigos RNDS disponíveis.",
+              "Liste os conceitos de um ValueSet RNDS.",
+              "Consulte um código em um CodeSystem RNDS."
+            ]
+          }
+        }
+      }
+    }
+  }
+}

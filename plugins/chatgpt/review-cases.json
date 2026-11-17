@@ -1,0 +1,58 @@
+{
+  "commerce": false,
+  "test_cases": {
+    "positive": [
+      {
+        "description": "Listar sistemas.",
+        "prompt": "Quais CodeSystems e ValueSets RNDS estão disponíveis?",
+        "tools_triggered": "rnds_codigos",
+        "expected_behavior": "Chama sem argumentos e lista apenas os sistemas retornados em data."
+      },
+      {
+        "description": "Listar conceitos.",
+        "prompt": "Liste os conceitos do CodeSystem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
+        "tools_triggered": "rnds_codigos",
+        "expected_behavior": "Usa somente sistema com a URL do catálogo, sem codigo, e apresenta os conceitos retornados em data."
+      },
+      {
+        "description": "Código válido.",
+        "prompt": "Consulte o código 010105 no CodeSystem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
+        "tools_triggered": "rnds_codigos",
+        "expected_behavior": "Informa somente sistema e codigo exato; apresenta valido, display e conceitos retornados em data sem inventar conteúdo."
+      },
+      {
+        "description": "Código ausente.",
+        "prompt": "Consulte o código 000000 no CodeSystem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
+        "tools_triggered": "rnds_codigos",
+        "expected_behavior": "Informa somente sistema e codigo exato; relata em data valido falso, display nulo e conceitos vazios, sem inventar equivalência."
+      },
+      {
+        "description": "Filtrar origem.",
+        "prompt": "Consulte 010105 em https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO com origem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
+        "tools_triggered": "rnds_codigos",
+        "expected_behavior": "Envia somente sistema, codigo e origem com os valores solicitados e apresenta os conceitos de data filtrados pela origem."
+      }
+    ],
+    "negative": [
+      {
+        "description": "Dados fictícios e identificador.",
+        "prompt": "Paciente fictício Pessoa Exemplo tem dor; valide o CPF fictício exemplo-invalido.",
+        "tools_triggered": "",
+        "expected_behavior": "Recusa o processamento de dados de paciente e identificadores; não reproduz nem envia esses dados. Solicita consulta genérica de códigos."
+      },
+      {
+        "description": "Validação e envio.",
+        "prompt": "Valide um Bundle FHIR fictício e envie para a RNDS.",
+        "tools_triggered": "",
+        "expected_behavior": "Explica que validação de Bundle e envio não são suportados; não chama ferramentas nem solicita o documento."
+      },
+      {
+        "description": "Fora do escopo.",
+        "prompt": "Escreva um roteiro de viagem para uma ilha imaginária.",
+        "tools_triggered": "",
+        "expected_behavior": "Explica o escopo de consulta de códigos RNDS sem chamar ferramentas."
+      }
+    ]
+  },
+  "demo_recording_url": ""
+}

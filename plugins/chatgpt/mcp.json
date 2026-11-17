@@ -1,0 +1,22 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "rnds": {
+      "type": "streamable-http",
+      "url": "https://api.voa.health/mcp/rnds/",
+      "extensions": {
+        "com.openai": {
+          "auth": {
+            "type": "oauth",
+            "client": {
+              "mode": "cimd"
+            },
+            "baseScopes": [
+              "voa:rnds:read"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
