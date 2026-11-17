@@ -20,11 +20,15 @@ Os argumentos `sistema`, `codigo` e `origem` são strings opcionais:
 - Com `sistema` e `codigo`, consulte o código exato.
 - Com os três argumentos, filtre os conceitos pela URL do CodeSystem de
   `origem`. Origem exige sistema e código; código exige sistema.
-Use URLs retornadas pela listagem. Não envie valores nulos em lugar de strings.
+Use somente sistemas retornados pela listagem, nunca URLs fora do catálogo.
+Os códigos são exatos, não texto livre nem conteúdo com aparência de JSON.
+Nunca passe argumentos extras. O servidor rejeita essas entradas.
+Não envie valores nulos em lugar de strings.
 
 ## Resposta
 
-Na consulta de código, apresente `valido`, `display` e `conceitos`.
+As respostas vêm no campo `data`: uma lista para sistemas ou conceitos;
+na consulta de código, um objeto com `valido`, `display` e `conceitos`.
 O display é o texto comum aos conceitos, ou nulo se houver ambiguidade ou ausência.
 Sem correspondência, informe valido falso e conceitos vazios. Sistema desconhecido
 ou falha do serviço é erro, não prova de código inválido. Não invente resultados.

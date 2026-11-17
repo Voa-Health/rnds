@@ -6,31 +6,31 @@
         "description": "Listar sistemas.",
         "prompt": "Quais CodeSystems e ValueSets RNDS estão disponíveis?",
         "tools_triggered": "rnds_codigos",
-        "expected_behavior": "Chama sem argumentos e lista apenas os sistemas retornados."
+        "expected_behavior": "Chama sem argumentos e lista apenas os sistemas retornados em data."
       },
       {
         "description": "Listar conceitos.",
         "prompt": "Liste os conceitos do CodeSystem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
         "tools_triggered": "rnds_codigos",
-        "expected_behavior": "Informa sistema com a URL solicitada, sem codigo, e apresenta conceitos retornados."
+        "expected_behavior": "Usa somente sistema com a URL do catálogo, sem codigo, e apresenta os conceitos retornados em data."
       },
       {
         "description": "Código válido.",
         "prompt": "Consulte o código 010105 no CodeSystem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
         "tools_triggered": "rnds_codigos",
-        "expected_behavior": "Informa sistema e codigo; apresenta valido, display e conceitos retornados sem inventar conteúdo."
+        "expected_behavior": "Informa somente sistema e codigo exato; apresenta valido, display e conceitos retornados em data sem inventar conteúdo."
       },
       {
         "description": "Código ausente.",
-        "prompt": "Consulte o código exemplo-inexistente no CodeSystem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
+        "prompt": "Consulte o código 000000 no CodeSystem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
         "tools_triggered": "rnds_codigos",
-        "expected_behavior": "Informa sistema e codigo; relata valido falso, display nulo e conceitos vazios, sem inventar equivalência."
+        "expected_behavior": "Informa somente sistema e codigo exato; relata em data valido falso, display nulo e conceitos vazios, sem inventar equivalência."
       },
       {
         "description": "Filtrar origem.",
         "prompt": "Consulte 010105 em https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO com origem https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO.",
         "tools_triggered": "rnds_codigos",
-        "expected_behavior": "Envia sistema, codigo e origem com os valores solicitados e apresenta somente os conceitos da origem."
+        "expected_behavior": "Envia somente sistema, codigo e origem com os valores solicitados e apresenta os conceitos de data filtrados pela origem."
       }
     ],
     "negative": [

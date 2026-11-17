@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from rnds import __version__
+from rnds import __version__, codigos
 from rnds._mcp import TOOLS
 
 PACKAGE = Path(__file__).resolve().parents[1] / "plugins" / "chatgpt"
@@ -120,6 +120,13 @@ def test_review_cases(group, count, tool):
     assert review["commerce"] is False
     assert review["demo_recording_url"] == ""
     assert set(review["test_cases"]) == {"positive", "negative"}
+    embedded = _json("plugin.json")["extensions"]["com.openai"]["review"]["test_cases"]
+    assert embedded == review["test_cases"]
+    assert len(embedded["positive"]) == 5
+    assert len(embedded["negative"]) == 3
+    absent = review["test_cases"]["positive"][3]
+    assert "000000" in absent["prompt"]
+    assert not codigos.busca("https://rnds-fhir.saude.gov.br/CodeSystem/BRCBO", "000000")
     cases = review["test_cases"][group]
     assert len(cases) == count
     patterns = (
