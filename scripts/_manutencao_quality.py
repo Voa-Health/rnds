@@ -78,6 +78,13 @@ def _verificar_texto(root: Path) -> bool:
             texto_verificado = texto_linha
             if relativo in {"plugins/chatgpt/mcp.json", "tests/test_chatgpt_plugin.py"}:
                 texto_verificado = texto_verificado.replace("https://api.voa.health/mcp/rnds/", "")
+            if relativo in {"README.md", "llms.txt"}:
+                for url in (
+                    "https://api.voa.health/mcp/rnds/",
+                    "https://api.voa.health/api/v2/product/rnds/pricing/",
+                    "https://tiss-api.voa.health/org",
+                ):
+                    texto_verificado = texto_verificado.replace(url, "")
             proibido = _TERMOS.search(texto_verificado)
             if proibido:
                 print(f"{relativo}:{linha}: termo não permitido: {proibido.group()}")
