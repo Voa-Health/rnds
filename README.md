@@ -130,6 +130,23 @@ O ciclo antes do envio é sempre o mesmo:
 
 ## Conectar agentes
 
+### ChatGPT via HTTP
+
+O pacote [ChatGPT](plugins/chatgpt/) expõe somente `rnds_codigos` por HTTP
+remoto com OAuth. Consulta códigos públicos incluídos no pacote, sem dados de
+paciente ou identificadores; não valida Bundles nem envia documentos à RNDS.
+O MCP local em stdio abaixo mantém todas as ferramentas.
+
+Para gerar `dist/rnds-chatgpt-plugin.zip` com `plugin.json` na raiz, execute
+na raiz do repositório:
+
+```sh
+mkdir -p dist
+(cd plugins/chatgpt && zip -r ../../dist/rnds-chatgpt-plugin.zip .)
+```
+
+### MCP local em stdio
+
 O MCP local roda offline e mantém os dados na máquina:
 
 ```sh

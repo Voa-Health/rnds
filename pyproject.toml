@@ -49,6 +49,7 @@ packages = ["src/rnds"]
 
 [tool.hatch.build.targets.sdist]
 include = [
+  "plugins/chatgpt",
   "src/rnds",
   "scripts",
   "tests",
