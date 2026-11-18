@@ -26,7 +26,7 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-cliente = ["httpx>=0.28,<1", "cryptography>=43,<47"]
+cliente = ["httpx>=0.28,<1", "cryptography>=43,<51"]
 mcp = ["mcp>=1.30,<3"]
 
 [project.scripts]
