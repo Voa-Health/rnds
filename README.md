@@ -255,9 +255,19 @@ ValueSet por elemento.
 ## Cliente RNDS (Alpha)
 
 Instale com `pip install "rnds[cliente]"`. O cliente foi testado somente com
-respostas simuladas, sem homologação real. O credenciamento no DATASUS e o
-certificado ICP-Brasil são responsabilidade do integrador. Produção não é
-ambiente para testes.
+respostas simuladas, sem homologação real.
+
+### Serviços do governo
+
+Para enviar à RNDS, o estabelecimento de saúde com CNES é credenciado pelo gestor no
+[Portal de Serviços DATASUS](https://servicos-datasus.saude.gov.br/), com conta gov.br
+e certificado ICP-Brasil A1 (`.pfx`, e-CNPJ ou e-CPF do responsável). A empresa de
+software atua como integradora e não recebe credencial própria.
+
+Na homologação, o credenciamento fornece o identificador do solicitante, usado pelo
+conector com o certificado em mTLS. A produção é solicitada após a homologação.
+Certificados em nuvem usados para assinar prescrições não fornecem o `.pfx`
+exigido pelo mTLS. Produção não é ambiente para testes.
 
 Exemplo sintético de homologação, com autorização fictícia (não executável no serviço):
 
