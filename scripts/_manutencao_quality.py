@@ -82,7 +82,7 @@ def _verificar_texto(root: Path) -> bool:
                 for url in (
                     "https://api.voa.health/mcp/rnds/",
                     "https://api.voa.health/api/v2/product/rnds/pricing/",
-                    "https://tiss-api.voa.health/org",
+                    "https://console.voa.health",
                 ):
                     texto_verificado = texto_verificado.replace(url, "")
             proibido = _TERMOS.search(texto_verificado)
